@@ -4,13 +4,7 @@ import { ImagePreview } from '@/components/ImagePreview';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { Download, Image as ImageIcon } from 'lucide-react';
-import JSZip from 'jszip';
-
-const TEMPLATES = [
-  { name: 'Instagram Post', width: 1080, height: 1080 },
-  { name: 'Facebook Cover', width: 820, height: 312 },
-  { name: 'Twitter Post', width: 1200, height: 675 },
-];
+import { TEMPLATES, processImages } from '@/utils/imageProcessor';
 
 export default function Index() {
   const [files, setFiles] = useState<File[]>([]);
@@ -18,6 +12,14 @@ export default function Index() {
   const { toast } = useToast();
 
   const handleFilesSelected = (newFiles: File[]) => {
+    if (files.length + newFiles.length > 5) {
+      toast({
+        title: "Too many files",
+        description: "Maximum of 5 images allowed per batch.",
+        variant: "destructive"
+      });
+      return;
+    }
     setFiles((prev) => [...prev, ...newFiles]);
     toast({
       title: "Images added",
@@ -29,7 +31,7 @@ export default function Index() {
     setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const processImages = async () => {
+  const handleProcessImages = async () => {
     if (files.length === 0) {
       toast({
         title: "No images selected",
@@ -40,21 +42,11 @@ export default function Index() {
     }
 
     setIsProcessing(true);
-    const zip = new JSZip();
 
     try {
-      // Simulate processing for demo
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // In a real implementation, we would process the images here
-      // For now, we'll just add the original files to the zip
-      files.forEach((file, i) => {
-        zip.file(`image_${i + 1}${file.name.substring(file.name.lastIndexOf('.'))}`, file);
-      });
-
-      const content = await zip.generateAsync({ type: "blob" });
+      const zipBlob = await processImages(files);
       const link = document.createElement('a');
-      link.href = URL.createObjectURL(content);
+      link.href = URL.createObjectURL(zipBlob);
       link.download = 'resized_images.zip';
       link.click();
       URL.revokeObjectURL(link.href);
@@ -66,7 +58,7 @@ export default function Index() {
     } catch (error) {
       toast({
         title: "Error processing images",
-        description: "An error occurred while processing your images.",
+        description: error instanceof Error ? error.message : "An error occurred while processing your images.",
         variant: "destructive"
       });
     } finally {
@@ -118,7 +110,7 @@ export default function Index() {
             <div className="flex justify-center">
               <Button
                 size="lg"
-                onClick={processImages}
+                onClick={handleProcessImages}
                 disabled={isProcessing}
               >
                 {isProcessing ? (
