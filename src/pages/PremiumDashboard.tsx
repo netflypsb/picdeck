@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { UploadZone } from '@/components/UploadZone';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Crown, Wand2, Upload, Settings } from 'lucide-react';
+import { Profile } from '@/types/database';
 
 export default function PremiumDashboard() {
   const navigate = useNavigate();
@@ -23,7 +24,7 @@ export default function PremiumDashboard() {
       .from('profiles')
       .select('subscription_tier, subscription_status')
       .eq('id', session.user.id)
-      .single();
+      .single<Profile>();
 
     if (error || !profile || profile.subscription_tier !== 'premium' || profile.subscription_status !== 'active') {
       navigate('/');

@@ -1,40 +1,40 @@
 import { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { cn } from '@/lib/utils';
+import { Upload } from 'lucide-react';
 
 export interface UploadZoneProps {
+  onFilesSelected?: (files: File[]) => void;
   className?: string;
 }
 
-export function UploadZone({ className }: UploadZoneProps) {
+export function UploadZone({ onFilesSelected, className = '' }: UploadZoneProps) {
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    console.log('Accepted files:', acceptedFiles);
-    // Handle file upload logic here
-    acceptedFiles.forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        // Do something with the file content
-      };
-      reader.readAsArrayBuffer(file);
-    });
-  }, []);
+    onFilesSelected?.(acceptedFiles);
+  }, [onFilesSelected]);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'image/*': ['.png', '.jpg', '.jpeg', '.gif']
+    }
+  });
 
   return (
     <div
       {...getRootProps()}
-      className={cn(
-        "flex flex-col items-center justify-center w-full min-h-[200px] border-2 border-dashed rounded-lg cursor-pointer bg-secondary/20 hover:bg-secondary/30 transition-colors",
-        className
-      )}
+      className={`border-2 border-dashed rounded-lg p-12 text-center hover:border-primary transition-colors cursor-pointer ${
+        isDragActive ? 'border-primary bg-primary/5' : 'border-muted'
+      } ${className}`}
     >
       <input {...getInputProps()} />
-      {isDragActive ? (
-        <p>Drop the files here ...</p>
-      ) : (
-        <p>Drag 'n' drop some files here, or click to select files</p>
-      )}
+      <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
+      <h3 className="mt-4 text-lg font-semibold">Drop your images here</h3>
+      <p className="text-sm text-muted-foreground mt-2">
+        or click to select files
+      </p>
+      <p className="text-xs text-muted-foreground mt-2">
+        Supports: PNG, JPG, GIF
+      </p>
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Profile } from '@/types/database';
 
 export default function AuthPage() {
   const navigate = useNavigate();
@@ -26,7 +27,7 @@ export default function AuthPage() {
       .from('profiles')
       .select('subscription_tier, subscription_status')
       .eq('id', userId)
-      .single();
+      .single<Profile>();
 
     if (error) {
       console.error('Error fetching profile:', error);
