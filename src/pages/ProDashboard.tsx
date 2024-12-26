@@ -19,13 +19,13 @@ export default function ProDashboard() {
       return;
     }
 
-    const { data: profile } = await supabase
+    const { data: profile, error } = await supabase
       .from('profiles')
       .select('subscription_tier, subscription_status')
       .eq('id', session.user.id)
       .single();
 
-    if (profile?.subscription_tier !== 'pro' || profile?.subscription_status !== 'active') {
+    if (error || !profile || profile.subscription_tier !== 'pro' || profile.subscription_status !== 'active') {
       navigate('/');
     }
   };

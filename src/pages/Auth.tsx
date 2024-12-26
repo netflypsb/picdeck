@@ -22,11 +22,17 @@ export default function AuthPage() {
   const checkSubscriptionAndRedirect = async (userId: string | undefined) => {
     if (!userId) return;
     
-    const { data: profile } = await supabase
+    const { data: profile, error } = await supabase
       .from('profiles')
       .select('subscription_tier, subscription_status')
       .eq('id', userId)
       .single();
+
+    if (error) {
+      console.error('Error fetching profile:', error);
+      navigate('/');
+      return;
+    }
 
     if (profile?.subscription_status === 'active') {
       if (profile.subscription_tier === 'premium') {
