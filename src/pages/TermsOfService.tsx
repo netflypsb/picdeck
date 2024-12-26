@@ -1,5 +1,6 @@
 import { Header } from "@/components/Header";
-import { FileText } from "lucide-react";
+import { FileText, Mail, Shield } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function TermsOfService() {
   return (
@@ -33,7 +34,7 @@ export default function TermsOfService() {
             <h2>3. Subscriptions and Fees</h2>
             <ul>
               <li>The Free Tier includes limited features as outlined on our website.</li>
-              <li>Paid subscriptions ("Pro" and "Premium") offer additional features and are billed monthly.</li>
+              <li>Paid subscriptions ("Pro" and "Premium") offer additional features and are billed monthly or annually.</li>
               <li>All payments are securely processed through Stripe. No additional fees are charged apart from those displayed during checkout.</li>
             </ul>
           </section>
@@ -107,6 +108,25 @@ export default function TermsOfService() {
           </section>
         </div>
       </main>
+      <footer id="contact" className="border-t">
+        <div className="container mx-auto px-4 py-8 text-center">
+          <p className="text-muted-foreground">© 2024 PicDeck. All rights reserved.</p>
+          <div className="mt-4 space-x-4">
+            <Link to="/contact" className="text-sm hover:text-primary inline-flex items-center gap-2">
+              <Mail className="h-4 w-4" />
+              Contact
+            </Link>
+            <Link to="/privacy-policy" className="text-sm hover:text-primary inline-flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              Privacy Policy
+            </Link>
+            <Link to="/terms-of-service" className="text-sm hover:text-primary inline-flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Terms of Service
+            </Link>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
