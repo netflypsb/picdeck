@@ -4,7 +4,9 @@ import { FeaturesSection } from '@/components/sections/FeaturesSection';
 import { UploadSection } from '@/components/sections/UploadSection';
 import { PricingSection } from '@/components/sections/PricingSection';
 import { UserGuideSection } from '@/components/sections/UserGuideSection';
-import { FutureSection } from '@/components/sections/FutureSection';
+import { FAQSection } from '@/components/sections/FAQSection';
+import { Mail, Shield, FileText } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function Index() {
   return (
@@ -17,16 +19,25 @@ export default function Index() {
           <FeaturesSection />
           <PricingSection />
           <UserGuideSection />
-          <FutureSection />
+          <FAQSection />
         </div>
       </main>
       <footer id="contact" className="border-t">
         <div className="container mx-auto px-4 py-8 text-center">
           <p className="text-muted-foreground">© 2024 PicDeck. All rights reserved.</p>
           <div className="mt-4 space-x-4">
-            <a href="mailto:support@picdeck.com" className="text-sm hover:text-primary">Contact</a>
-            <a href="#" className="text-sm hover:text-primary">Privacy Policy</a>
-            <a href="#" className="text-sm hover:text-primary">Terms of Service</a>
+            <Link to="/contact" className="text-sm hover:text-primary inline-flex items-center gap-2">
+              <Mail className="h-4 w-4" />
+              Contact
+            </Link>
+            <Link to="/privacy-policy" className="text-sm hover:text-primary inline-flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              Privacy Policy
+            </Link>
+            <Link to="/terms-of-service" className="text-sm hover:text-primary inline-flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Terms of Service
+            </Link>
           </div>
         </div>
       </footer>

@@ -7,6 +7,9 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ProDashboard from "./pages/ProDashboard";
 import PremiumDashboard from "./pages/PremiumDashboard";
+import Contact from "./pages/Contact";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +24,9 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/pro-dashboard" element={<ProDashboard />} />
           <Route path="/premium-dashboard" element={<PremiumDashboard />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-of-service" element={<TermsOfService />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
