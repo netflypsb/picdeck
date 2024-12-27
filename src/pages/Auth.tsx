@@ -1,32 +1,45 @@
-import { Auth } from '@supabase/auth-ui-react';
-import { ThemeSupa } from '@supabase/auth-ui-shared';
-import { supabase } from '@/integrations/supabase/client';
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Auth as SupabaseAuth } from '@supabase/auth-ui-react'
+import { ThemeSupa } from '@supabase/auth-ui-shared'
+import { supabase } from '@/integrations/supabase/client'
+import { useUserTier } from '@/hooks/use-user-tier'
 
-export default function AuthPage() {
-  const navigate = useNavigate();
+export default function Auth() {
+  const navigate = useNavigate()
+  const { tier } = useUserTier()
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN') {
-        navigate('/');
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN') {
+          // Redirect based on user's tier
+          switch (tier) {
+            case 'pro':
+              navigate('/pro-dashboard')
+              break
+            case 'premium':
+              navigate('/premium-dashboard')
+              break
+            default:
+              navigate('/free-dashboard')
+          }
+        }
       }
-    });
+    )
 
     return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+      subscription.unsubscribe()
+    }
+  }, [navigate, tier])
 
   return (
-    <div className="container max-w-md mx-auto mt-20 p-6">
-      <Auth
+    <div className="container max-w-lg mx-auto p-8">
+      <SupabaseAuth
         supabaseClient={supabase}
         appearance={{ theme: ThemeSupa }}
-        theme="dark"
-        providers={[]}
+        providers={['google']}
       />
     </div>
-  );
+  )
 }

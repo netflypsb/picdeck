@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { useUserTier } from '@/hooks/use-user-tier';
+import { useNavigate } from 'react-router-dom';
 
 const pricingFeatures = {
   pro: [
@@ -23,6 +25,21 @@ const pricingFeatures = {
 
 export function PricingSection() {
   const [expandedCard, setExpandedCard] = useState<'pro' | 'premium' | null>(null);
+  const { tier, assignTier } = useUserTier();
+  const navigate = useNavigate();
+
+  const handleGetStarted = async (selectedTier: 'pro' | 'premium') => {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      navigate('/auth');
+      return;
+    }
+
+    // For now, assign a 30-day trial
+    await assignTier(selectedTier, 30);
+    navigate(`/${selectedTier.toLowerCase()}-dashboard`);
+  }
 
   return (
     <section id="pricing" className="py-12 space-y-8">
@@ -70,7 +87,13 @@ export function PricingSection() {
             )}
           </CardContent>
           <CardFooter className="flex-col gap-4">
-            <Button className="w-full">Get Started</Button>
+            <Button 
+              className="w-full"
+              onClick={() => handleGetStarted('pro')}
+              disabled={tier === 'pro'}
+            >
+              {tier === 'pro' ? 'Current Plan' : 'Get Started'}
+            </Button>
             <Button 
               variant="outline" 
               className="w-full"
@@ -130,7 +153,13 @@ export function PricingSection() {
             )}
           </CardContent>
           <CardFooter className="flex-col gap-4">
-            <Button className="w-full">Get Started</Button>
+            <Button 
+              className="w-full"
+              onClick={() => handleGetStarted('premium')}
+              disabled={tier === 'premium'}
+            >
+              {tier === 'premium' ? 'Current Plan' : 'Get Started'}
+            </Button>
             <Button 
               variant="outline" 
               className="w-full"

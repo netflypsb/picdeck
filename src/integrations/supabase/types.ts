@@ -33,6 +33,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_tiers: {
+        Row: {
+          created_at: string
+          end_date: string | null
+          start_date: string
+          stripe_status:
+            | Database["public"]["Enums"]["subscription_status"]
+            | null
+          stripe_subscription_id: string | null
+          tier: Database["public"]["Enums"]["user_tier"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_date?: string | null
+          start_date?: string
+          stripe_status?:
+            | Database["public"]["Enums"]["subscription_status"]
+            | null
+          stripe_subscription_id?: string | null
+          tier?: Database["public"]["Enums"]["user_tier"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string | null
+          start_date?: string
+          stripe_status?:
+            | Database["public"]["Enums"]["subscription_status"]
+            | null
+          stripe_subscription_id?: string | null
+          tier?: Database["public"]["Enums"]["user_tier"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -41,7 +80,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      subscription_status: "active" | "cancelled" | "past_due" | "incomplete"
+      user_tier: "free" | "pro" | "premium"
     }
     CompositeTypes: {
       [_ in never]: never
