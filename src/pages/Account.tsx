@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
+import { Header } from '@/components/Header';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,11 +17,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { LogOut, CreditCard, Key, HelpCircle } from 'lucide-react';
+import { LogOut, CreditCard, Key, HelpCircle, ArrowLeft } from 'lucide-react';
+import { useUserTier } from '@/hooks/use-user-tier';
 
 export default function Account() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { tier } = useUserTier();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -75,10 +78,35 @@ export default function Account() {
     navigate('/');
   };
 
+  const handleBackToDashboard = () => {
+    switch (tier) {
+      case 'pro':
+        navigate('/pro-dashboard');
+        break;
+      case 'premium':
+        navigate('/premium-dashboard');
+        break;
+      default:
+        navigate('/free-dashboard');
+    }
+  };
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-2xl mx-auto space-y-8">
-        <h1 className="text-3xl font-bold">Account Management</h1>
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      <div className="container mx-auto px-4 py-8 flex-1">
+        <div className="max-w-2xl mx-auto space-y-8">
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold text-foreground">Account Management</h1>
+            <Button 
+              variant="outline" 
+              onClick={handleBackToDashboard}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Dashboard
+            </Button>
+          </div>
 
         <Card>
           <CardHeader>
@@ -174,6 +202,7 @@ export default function Account() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+        </div>
       </div>
     </div>
   );
