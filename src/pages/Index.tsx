@@ -3,6 +3,7 @@ import { HeroSection } from '@/components/sections/HeroSection';
 import { FeaturesSection } from '@/components/sections/FeaturesSection';
 import { UploadSection } from '@/components/sections/UploadSection';
 import { PricingSection } from '@/components/sections/PricingSection';
+import { TierComparisonSection } from '@/components/sections/TierComparisonSection';
 import { UserGuideSection } from '@/components/sections/UserGuideSection';
 import { FAQSection } from '@/components/sections/FAQSection';
 import { Mail, Shield, FileText } from 'lucide-react';
@@ -17,6 +18,7 @@ export default function Index() {
           <HeroSection />
           <UploadSection />
           <FeaturesSection />
+          <TierComparisonSection />
           <PricingSection />
           <UserGuideSection />
           <FAQSection />
