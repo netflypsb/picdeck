@@ -5,9 +5,10 @@ import { Upload } from 'lucide-react';
 export interface UploadZoneProps {
   onFilesSelected?: (files: File[]) => void;
   className?: string;
+  maxFiles?: number;
 }
 
-export function UploadZone({ onFilesSelected, className = '' }: UploadZoneProps) {
+export function UploadZone({ onFilesSelected, className = '', maxFiles = 5 }: UploadZoneProps) {
   const onDrop = useCallback((acceptedFiles: File[]) => {
     onFilesSelected?.(acceptedFiles);
   }, [onFilesSelected]);
@@ -16,7 +17,8 @@ export function UploadZone({ onFilesSelected, className = '' }: UploadZoneProps)
     onDrop,
     accept: {
       'image/*': ['.png', '.jpg', '.jpeg', '.gif']
-    }
+    },
+    maxFiles,
   });
 
   return (
@@ -28,12 +30,12 @@ export function UploadZone({ onFilesSelected, className = '' }: UploadZoneProps)
     >
       <input {...getInputProps()} />
       <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
-      <h3 className="mt-4 text-lg font-semibold">Drop your images here</h3>
+      <h3 className="mt-4 text-lg font-semibold text-foreground">Drop your images here</h3>
       <p className="text-sm text-muted-foreground mt-2">
         or click to select files
       </p>
       <p className="text-xs text-muted-foreground mt-2">
-        Supports: PNG, JPG, GIF
+        Supports: PNG, JPG, GIF (up to {maxFiles} files)
       </p>
     </div>
   );
