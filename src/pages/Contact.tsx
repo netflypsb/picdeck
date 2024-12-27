@@ -6,7 +6,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { ContactMessage } from "@/types/database";
 
 export default function Contact() {
   const [name, setName] = useState("");
@@ -22,7 +21,7 @@ export default function Contact() {
     try {
       const { error } = await supabase
         .from('contact_messages')
-        .insert<ContactMessage>([{ name, email, message }]);
+        .insert({ name, email, message });
 
       if (error) throw error;
 
