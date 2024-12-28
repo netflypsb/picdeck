@@ -9,43 +9,41 @@ import { Label } from '@/components/ui/label'
 
 export default function Auth() {
   const navigate = useNavigate()
-  const { tier, isLoading } = useUserTier()
+  const { tier, isLoading, tierData } = useUserTier()
   const [showPassword, setShowPassword] = useState(false)
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_IN' && session) {
-          console.log('User signed in, session:', session)
+          console.log('User signed in, waiting for tier data...')
+          
+          // Wait for tier data to be available
+          const checkTierAndNavigate = () => {
+            if (!isLoading) {
+              console.log('Current tier:', tier)
+              console.log('Full tier data:', tierData)
 
-          // Wait for `tier` data to load before navigating
-          const checkTier = async () => {
-            if (isLoading) {
-              console.log('Waiting for tier data...')
-              return
-            }
-
-            console.log('User tier:', tier)
-
-            switch (tier) {
-              case 'premium':
-                navigate('/premium-dashboard')
-                break
-              case 'pro':
-                navigate('/pro-dashboard')
-                break
-              default:
-                navigate('/free-dashboard')
+              switch (tier) {
+                case 'premium':
+                  console.log('Navigating to premium dashboard')
+                  navigate('/premium-dashboard')
+                  break
+                case 'pro':
+                  console.log('Navigating to pro dashboard')
+                  navigate('/pro-dashboard')
+                  break
+                default:
+                  console.log('Navigating to free dashboard')
+                  navigate('/free-dashboard')
+              }
+            } else {
+              console.log('Tier data still loading...')
+              setTimeout(checkTierAndNavigate, 500)
             }
           }
 
-          // Retry until `tier` is available
-          const interval = setInterval(async () => {
-            if (!isLoading) {
-              clearInterval(interval)
-              await checkTier()
-            }
-          }, 500)
+          checkTierAndNavigate()
         }
       }
     )
@@ -53,7 +51,7 @@ export default function Auth() {
     return () => {
       subscription.unsubscribe()
     }
-  }, [navigate, tier, isLoading])
+  }, [navigate, tier, isLoading, tierData])
 
   // Show loading state while checking tier
   if (isLoading) {

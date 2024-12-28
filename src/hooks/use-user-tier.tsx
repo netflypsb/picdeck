@@ -18,7 +18,9 @@ export function useUserTier() {
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession()
-      setUserId(session?.user?.id ?? null)
+      const newUserId = session?.user?.id ?? null
+      console.log('Current user ID:', newUserId)
+      setUserId(newUserId)
     }
     checkAuth()
   }, [])
@@ -28,13 +30,19 @@ export function useUserTier() {
     queryFn: async () => {
       if (!userId) return null
       
+      console.log('Fetching tier data for user:', userId)
       const { data, error } = await supabase
         .from('user_tiers')
         .select('*')
         .eq('user_id', userId)
         .single()
 
-      if (error) throw error
+      if (error) {
+        console.error('Error fetching tier:', error)
+        throw error
+      }
+      
+      console.log('Fetched tier data:', data)
       return data as UserTier
     },
     enabled: !!userId
