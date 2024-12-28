@@ -81,7 +81,7 @@ export type Database = {
     }
     Enums: {
       subscription_status: "active" | "cancelled" | "past_due" | "incomplete"
-      user_tier: "free" | "pro" | "premium"
+      user_tier: "free" | "pro" | "premium" | "alpha_tester"
     }
     CompositeTypes: {
       [_ in never]: never

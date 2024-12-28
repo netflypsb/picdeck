@@ -17,11 +17,14 @@ export default function Auth() {
       async (event, session) => {
         if (event === 'SIGNED_IN') {
           switch (tier) {
-            case 'pro':
-              navigate('/pro-dashboard')
+            case 'alpha_tester':
+              navigate('/alpha-tester-dashboard')
               break
             case 'premium':
               navigate('/premium-dashboard')
+              break
+            case 'pro':
+              navigate('/pro-dashboard')
               break
             default:
               navigate('/free-dashboard')
