@@ -21,8 +21,6 @@ export default function Auth() {
             console.log('Auth - Current tier:', tierData.tier)
             switch (tierData.tier) {
               case 'alpha_tester':
-                navigate('/alpha-tester-dashboard')
-                break
               case 'premium':
                 navigate('/premium-dashboard')
                 break
