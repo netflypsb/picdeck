@@ -15,23 +15,36 @@ export default function FreeDashboard() {
   const { tier, isLoading, tierData } = useUserTier();
   const [isAuthChecking, setIsAuthChecking] = useState(true);
 
-  // First useEffect to handle auth check
   useEffect(() => {
-    checkAuth();
-  }, []);
-
-  // Separate useEffect to handle tier-based routing
-  useEffect(() => {
-    const handleTierRouting = async () => {
-      if (!isLoading && !isAuthChecking && tierData?.tier) {
-        console.log('Current tier:', tierData.tier);
-        
-        // Early return if user is free tier
-        if (tierData.tier === 'free') {
+    const checkAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          navigate('/auth');
           return;
         }
+        
+        console.log('User session:', session.user.id);
+        setIsAuthChecking(false);
+      } catch (error) {
+        console.error('Auth check error:', error);
+        toast({
+          title: "Authentication Error",
+          description: "Please try signing in again",
+          variant: "destructive"
+        });
+        navigate('/auth');
+      }
+    };
 
-        // Define dashboard routes
+    checkAuth();
+  }, [navigate, toast]);
+
+  useEffect(() => {
+    if (!isLoading && !isAuthChecking && tierData?.tier) {
+      console.log('Current tier:', tierData.tier);
+      
+      if (tierData.tier !== 'free') {
         const dashboardRoutes: Record<UserRole, string> = {
           'alpha_tester': '/alpha-tester-dashboard',
           'premium': '/premium-dashboard',
@@ -43,33 +56,11 @@ export default function FreeDashboard() {
         if (targetRoute) {
           console.log(`Redirecting ${tierData.tier} user to ${targetRoute}`);
           navigate(targetRoute, { replace: true });
+          return;
         }
       }
-    };
-
-    handleTierRouting();
-  }, [tier, isLoading, isAuthChecking, tierData, navigate]);
-
-  const checkAuth = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate('/auth');
-        return;
-      }
-      
-      console.log('User session:', session.user.id);
-      setIsAuthChecking(false);
-    } catch (error) {
-      console.error('Auth check error:', error);
-      toast({
-        title: "Authentication Error",
-        description: "Please try signing in again",
-        variant: "destructive"
-      });
-      navigate('/auth');
     }
-  };
+  }, [tier, isLoading, isAuthChecking, tierData, navigate]);
 
   if (isLoading || isAuthChecking) {
     return (
@@ -79,7 +70,7 @@ export default function FreeDashboard() {
     );
   }
 
-  // If user is not free tier, show nothing while redirecting
+  // Only render the dashboard if the user is actually a free tier user
   if (tierData?.tier && tierData.tier !== 'free') {
     return null;
   }
