@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/components/ui/use-toast'
 
 export type UserTier = {
-  tier: 'free' | 'pro' | 'premium'
+  tier: 'free' | 'pro' | 'premium' | 'alpha_tester'
   start_date: string
   end_date: string | null
   stripe_subscription_id: string | null
