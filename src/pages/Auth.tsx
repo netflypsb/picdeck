@@ -9,26 +9,29 @@ import { Label } from '@/components/ui/label'
 
 export default function Auth() {
   const navigate = useNavigate()
-  const { tier, isLoading, tierData } = useUserTier()
+  const { tierData, isLoading } = useUserTier()
   const [showPassword, setShowPassword] = useState(false)
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (event === 'SIGNED_IN' && !isLoading && tierData) {
-          console.log('Current tier:', tierData.tier) // Debug log
-          switch (tierData.tier) {
-            case 'alpha_tester':
-              navigate('/alpha-tester-dashboard')
-              break
-            case 'premium':
-              navigate('/premium-dashboard')
-              break
-            case 'pro':
-              navigate('/pro-dashboard')
-              break
-            default:
-              navigate('/free-dashboard')
+        if (event === 'SIGNED_IN') {
+          // Wait for tier data to be loaded
+          if (!isLoading && tierData) {
+            console.log('Auth - Current tier:', tierData.tier)
+            switch (tierData.tier) {
+              case 'alpha_tester':
+                navigate('/alpha-tester-dashboard')
+                break
+              case 'premium':
+                navigate('/premium-dashboard')
+                break
+              case 'pro':
+                navigate('/pro-dashboard')
+                break
+              default:
+                navigate('/free-dashboard')
+            }
           }
         }
       }
@@ -37,7 +40,7 @@ export default function Auth() {
     return () => {
       subscription.unsubscribe()
     }
-  }, [navigate, tier, isLoading, tierData])
+  }, [navigate, isLoading, tierData])
 
   return (
     <div className="container max-w-lg mx-auto p-8">
