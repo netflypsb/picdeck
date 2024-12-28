@@ -18,34 +18,29 @@ export default function Auth() {
         if (event === 'SIGNED_IN' && session) {
           console.log('User signed in, waiting for tier data...')
           
-          const checkTierAndNavigate = () => {
+          // Wait for tier data to be loaded
+          const waitForTier = () => {
             if (!isLoading) {
-              console.log('Current tier:', tier)
+              console.log('Routing user with tier:', tier)
               
-              switch (tier) {
-                case 'platinum':
-                  console.log('Navigating to platinum dashboard')
-                  navigate('/platinum-dashboard')
-                  break
-                case 'premium':
-                  console.log('Navigating to premium dashboard')
-                  navigate('/premium-dashboard')
-                  break
-                case 'pro':
-                  console.log('Navigating to pro dashboard')
-                  navigate('/pro-dashboard')
-                  break
-                default:
-                  console.log('Navigating to free dashboard')
-                  navigate('/free-dashboard')
+              // Map tier to dashboard route
+              const dashboardRoutes = {
+                'platinum': '/platinum-dashboard',
+                'premium': '/premium-dashboard',
+                'pro': '/pro-dashboard',
+                'free': '/free-dashboard'
               }
+              
+              const route = dashboardRoutes[tier] || '/free-dashboard'
+              console.log('Navigating to:', route)
+              navigate(route)
             } else {
-              console.log('Tier data still loading...')
-              setTimeout(checkTierAndNavigate, 500)
+              console.log('Tier data still loading, retrying...')
+              setTimeout(waitForTier, 100)
             }
           }
 
-          checkTierAndNavigate()
+          waitForTier()
         }
       }
     )
