@@ -1,15 +1,20 @@
 import JSZip from 'jszip';
 
-export const TEMPLATES = [
-  { name: 'Instagram Post', width: 1080, height: 1080 },
-  { name: 'Facebook Cover', width: 820, height: 312 },
-  { name: 'WhatsApp Profile', width: 500, height: 500 },
-  { name: 'TikTok Profile', width: 200, height: 200 },
-  { name: 'TikTok Post', width: 1080, height: 1920 },
-  { name: 'YouTube Post', width: 1280, height: 720 },
-] as const;
+export type WatermarkPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'center';
 
-export async function processImage(file: File, width: number, height: number): Promise<Blob> {
+export type WatermarkSettings = {
+  text: string;
+  position: WatermarkPosition;
+  opacity: number;
+  fontSize: number;
+};
+
+export async function processImageWithWatermark(
+  file: File,
+  width: number,
+  height: number,
+  watermarkSettings?: WatermarkSettings
+): Promise<Blob> {
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
@@ -21,12 +26,46 @@ export async function processImage(file: File, width: number, height: number): P
       // Draw resized image
       ctx.drawImage(img, 0, 0, width, height);
       
-      // Add watermark
-      ctx.font = `${Math.max(width, height) * 0.02}px Arial`;
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-      ctx.textAlign = 'right';
-      ctx.textBaseline = 'bottom';
-      ctx.fillText('Made with PicDeck', width - 10, height - 10);
+      // Add watermark if settings provided
+      if (watermarkSettings) {
+        const { text, position, opacity, fontSize } = watermarkSettings;
+        
+        ctx.save();
+        ctx.globalAlpha = opacity;
+        ctx.font = `${fontSize}px Arial`;
+        ctx.fillStyle = 'white';
+        
+        const metrics = ctx.measureText(text);
+        const padding = 20;
+        let x = 0;
+        let y = 0;
+        
+        switch (position) {
+          case 'top-left':
+            x = padding;
+            y = padding + fontSize;
+            break;
+          case 'top-right':
+            x = width - metrics.width - padding;
+            y = padding + fontSize;
+            break;
+          case 'bottom-left':
+            x = padding;
+            y = height - padding;
+            break;
+          case 'bottom-right':
+            x = width - metrics.width - padding;
+            y = height - padding;
+            break;
+          case 'center':
+            x = (width - metrics.width) / 2;
+            y = height / 2;
+            break;
+        }
+        
+        ctx.fillText(text, x, y);
+        ctx.restore();
+      }
       
       canvas.toBlob((blob) => {
         resolve(blob!);
@@ -36,16 +75,21 @@ export async function processImage(file: File, width: number, height: number): P
   });
 }
 
-export async function processImages(files: File[]): Promise<Blob> {
-  if (files.length > 5) {
-    throw new Error('Maximum of 5 images allowed per batch.');
-  }
-
+export async function processImagesWithWatermark(
+  files: File[],
+  templates: { name: string; width: number; height: number }[],
+  watermarkSettings?: WatermarkSettings
+): Promise<Blob> {
   const zip = new JSZip();
   
   for (const file of files) {
-    for (const template of TEMPLATES) {
-      const resizedImage = await processImage(file, template.width, template.height);
+    for (const template of templates) {
+      const resizedImage = await processImageWithWatermark(
+        file,
+        template.width,
+        template.height,
+        watermarkSettings
+      );
       const fileName = file.name.replace(
         /(\.[\w\d_-]+)$/i,
         `_${template.name.replace(/\s+/g, '')}_${template.width}x${template.height}$1`
