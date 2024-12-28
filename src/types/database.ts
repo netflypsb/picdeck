@@ -1,6 +1,8 @@
+export type UserRole = 'free' | 'pro' | 'premium' | 'alpha_tester';
+
 export interface Profile {
   id: string;
-  subscription_tier: 'free' | 'pro' | 'premium';
+  role: UserRole;
   subscription_status: 'active' | 'inactive';
 }
 
@@ -10,4 +12,10 @@ export interface ContactMessage {
   email: string;
   message: string;
   created_at: string;
+}
+
+export interface FeatureFlag {
+  name: string;
+  description: string;
+  enabled_for: UserRole[];
 }

@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/components/ui/use-toast'
+import { UserRole } from '@/types/database'
 
 export type UserTier = {
-  tier: 'free' | 'pro' | 'premium' | 'alpha_tester'
-  start_date: string
-  end_date: string | null
-  stripe_subscription_id: string | null
-  stripe_status: 'active' | 'cancelled' | 'past_due' | 'incomplete' | null
+  tier: UserRole;
+  start_date: string;
+  end_date: string | null;
+  stripe_subscription_id: string | null;
+  stripe_status: 'active' | 'cancelled' | 'past_due' | 'incomplete' | null;
 }
 
 export function useUserTier() {
@@ -40,7 +41,7 @@ export function useUserTier() {
     enabled: !!userId
   })
 
-  const assignTier = async (tier: UserTier['tier'], duration?: number) => {
+  const assignTier = async (tier: UserRole, duration?: number) => {
     try {
       if (!userId) throw new Error('User not authenticated')
 

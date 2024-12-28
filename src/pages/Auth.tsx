@@ -16,7 +16,6 @@ export default function Auth() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_IN') {
-          // Wait for tier data to be loaded
           if (!isLoading && tierData) {
             console.log('Auth - Current tier:', tierData.tier)
             switch (tierData.tier) {
