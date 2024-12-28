@@ -4,7 +4,7 @@ import { ImagePreview } from '@/components/ImagePreview';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { Download } from 'lucide-react';
-import { processImages } from '@/utils/imageProcessor';
+import { processImages, TEMPLATES } from '@/utils/imageProcessor';
 
 export function UploadSection() {
   const [files, setFiles] = useState<File[]>([]);
@@ -53,9 +53,10 @@ export function UploadSection() {
 
       toast({
         title: "Success!",
-        description: "Your images have been processed and downloaded.",
+        description: `Images processed for ${TEMPLATES.length} different formats.`,
       });
     } catch (error) {
+      console.error('Error processing images:', error);
       toast({
         title: "Error processing images",
         description: error instanceof Error ? error.message : "An error occurred while processing your images.",
