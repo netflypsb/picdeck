@@ -1,44 +1,14 @@
 import JSZip from 'jszip';
+import { Template } from './templates';
 
-export interface Template {
-  name: string;
-  width: number;
-  height: number;
-  description?: string;
+export type WatermarkPosition = 'top-left' | 'top-right' | 'center' | 'bottom-left' | 'bottom-right';
+
+export interface WatermarkSettings {
+  text: string;
+  position: WatermarkPosition;
+  opacity: number;
+  fontSize: number;
 }
-
-export const TEMPLATES: Template[] = [
-  {
-    name: 'Instagram Post',
-    width: 1080,
-    height: 1080,
-    description: 'Square format for Instagram feed posts'
-  },
-  {
-    name: 'Facebook Cover',
-    width: 851,
-    height: 315,
-    description: 'Facebook page cover image'
-  },
-  {
-    name: 'Twitter Post',
-    width: 1200,
-    height: 675,
-    description: 'Standard Twitter post image'
-  },
-  {
-    name: 'LinkedIn Banner',
-    width: 1584,
-    height: 396,
-    description: 'Professional LinkedIn profile banner'
-  },
-  {
-    name: 'YouTube Thumbnail',
-    width: 1280,
-    height: 720,
-    description: 'YouTube video thumbnail'
-  }
-];
 
 const createImage = (file: File): Promise<HTMLImageElement> => {
   return new Promise((resolve, reject) => {
@@ -49,15 +19,73 @@ const createImage = (file: File): Promise<HTMLImageElement> => {
   });
 };
 
-const resizeImage = async (
+const addWatermark = (
+  canvas: HTMLCanvasElement,
+  ctx: CanvasRenderingContext2D,
+  settings: WatermarkSettings
+) => {
+  const { text, position, opacity, fontSize } = settings;
+  
+  // Save context state
+  ctx.save();
+  
+  // Set watermark style
+  ctx.globalAlpha = opacity;
+  ctx.font = `${fontSize}px Arial`;
+  ctx.fillStyle = 'white';
+  ctx.strokeStyle = 'black';
+  ctx.lineWidth = fontSize / 25;
+  
+  // Calculate text metrics
+  const metrics = ctx.measureText(text);
+  const textWidth = metrics.width;
+  const textHeight = fontSize;
+  
+  // Calculate position
+  let x = 0;
+  let y = 0;
+  const padding = fontSize;
+  
+  switch (position) {
+    case 'top-left':
+      x = padding;
+      y = padding + textHeight;
+      break;
+    case 'top-right':
+      x = canvas.width - textWidth - padding;
+      y = padding + textHeight;
+      break;
+    case 'center':
+      x = (canvas.width - textWidth) / 2;
+      y = (canvas.height + textHeight) / 2;
+      break;
+    case 'bottom-left':
+      x = padding;
+      y = canvas.height - padding;
+      break;
+    case 'bottom-right':
+      x = canvas.width - textWidth - padding;
+      y = canvas.height - padding;
+      break;
+  }
+  
+  // Add stroke to make text readable on any background
+  ctx.strokeText(text, x, y);
+  ctx.fillText(text, x, y);
+  
+  // Restore context state
+  ctx.restore();
+};
+
+const resizeAndWatermark = async (
   file: File,
-  targetWidth: number,
-  targetHeight: number
+  template: Template,
+  watermarkSettings: WatermarkSettings
 ): Promise<Blob> => {
   const img = await createImage(file);
   const canvas = document.createElement('canvas');
-  canvas.width = targetWidth;
-  canvas.height = targetHeight;
+  canvas.width = template.width;
+  canvas.height = template.height;
   const ctx = canvas.getContext('2d');
 
   if (!ctx) {
@@ -66,20 +94,23 @@ const resizeImage = async (
 
   // Calculate scaling to maintain aspect ratio
   const scale = Math.min(
-    targetWidth / img.width,
-    targetHeight / img.height
+    template.width / img.width,
+    template.height / img.height
   );
   const scaledWidth = img.width * scale;
   const scaledHeight = img.height * scale;
 
   // Center the image
-  const x = (targetWidth - scaledWidth) / 2;
-  const y = (targetHeight - scaledHeight) / 2;
+  const x = (template.width - scaledWidth) / 2;
+  const y = (template.height - scaledHeight) / 2;
 
   // Clear canvas and draw image
   ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, targetWidth, targetHeight);
+  ctx.fillRect(0, 0, template.width, template.height);
   ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
+
+  // Add watermark
+  addWatermark(canvas, ctx, watermarkSettings);
 
   // Clean up
   URL.revokeObjectURL(img.src);
@@ -95,17 +126,21 @@ const resizeImage = async (
   });
 };
 
-export const processImages = async (files: File[]): Promise<Blob> => {
+export const processImagesWithWatermark = async (
+  files: File[],
+  templates: Template[],
+  watermarkSettings: WatermarkSettings
+): Promise<Blob> => {
   try {
     const zip = new JSZip();
     const processedFiles = await Promise.all(
       files.map(async (file) => {
         const results = await Promise.all(
-          TEMPLATES.map(async (template) => {
-            const resized = await resizeImage(file, template.width, template.height);
+          templates.map(async (template) => {
+            const processed = await resizeAndWatermark(file, template, watermarkSettings);
             return {
               name: `${file.name.split('.')[0]}_${template.name.toLowerCase().replace(/\s+/g, '_')}.jpg`,
-              blob: resized
+              blob: processed
             };
           })
         );
