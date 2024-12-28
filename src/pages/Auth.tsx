@@ -23,10 +23,10 @@ export default function Auth() {
           // Wait a moment for tier data to be loaded
           setTimeout(async () => {
             if (tierData) {
-              console.log('Auth - Current tier:', tierData.tier)
+              console.log('Auth - Current tier:', tier)
               console.log('Auth - User ID:', session.user.id)
               
-              // Use the effective tier which already handles alpha testers as premium
+              // Use the effective tier for navigation
               switch (tier) {
                 case 'premium':
                   navigate('/premium-dashboard')
@@ -50,7 +50,7 @@ export default function Auth() {
               console.log('Auth - No tier data available, redirecting to free dashboard')
               navigate('/free-dashboard')
             }
-          }, 1000) // Give a short delay to ensure tier data is loaded
+          }, 1000)
         }
       }
     )
@@ -58,7 +58,7 @@ export default function Auth() {
     return () => {
       subscription.unsubscribe()
     }
-  }, [navigate, isLoading, tierData, toast, refetch, tier]) // Added tier to dependencies
+  }, [navigate, isLoading, tierData, toast, refetch, tier])
 
   return (
     <div className="container max-w-lg mx-auto p-8">
