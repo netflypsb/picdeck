@@ -9,93 +9,7 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      contact_messages: {
-        Row: {
-          created_at: string
-          email: string
-          id: string
-          message: string
-          name: string
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          id?: string
-          message: string
-          name: string
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          id?: string
-          message?: string
-          name?: string
-        }
-        Relationships: []
-      }
-      feature_flags: {
-        Row: {
-          created_at: string
-          description: string
-          enabled_for: Database["public"]["Enums"]["user_role"][]
-          id: string
-          name: Database["public"]["Enums"]["feature_name"]
-        }
-        Insert: {
-          created_at?: string
-          description: string
-          enabled_for: Database["public"]["Enums"]["user_role"][]
-          id?: string
-          name: Database["public"]["Enums"]["feature_name"]
-        }
-        Update: {
-          created_at?: string
-          description?: string
-          enabled_for?: Database["public"]["Enums"]["user_role"][]
-          id?: string
-          name?: Database["public"]["Enums"]["feature_name"]
-        }
-        Relationships: []
-      }
-      user_tiers: {
-        Row: {
-          created_at: string
-          end_date: string | null
-          start_date: string
-          stripe_status:
-            | Database["public"]["Enums"]["subscription_status"]
-            | null
-          stripe_subscription_id: string | null
-          tier: Database["public"]["Enums"]["user_tier"]
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          end_date?: string | null
-          start_date?: string
-          stripe_status?:
-            | Database["public"]["Enums"]["subscription_status"]
-            | null
-          stripe_subscription_id?: string | null
-          tier?: Database["public"]["Enums"]["user_tier"]
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          end_date?: string | null
-          start_date?: string
-          stripe_status?:
-            | Database["public"]["Enums"]["subscription_status"]
-            | null
-          stripe_subscription_id?: string | null
-          tier?: Database["public"]["Enums"]["user_tier"]
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Views: {
       [_ in never]: never
@@ -104,14 +18,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      feature_name:
-        | "basicTemplates"
-        | "advancedTemplates"
-        | "customWatermarks"
-        | "experimentalFeatures"
-      subscription_status: "active" | "cancelled" | "past_due" | "incomplete"
-      user_role: "free" | "pro" | "premium" | "alpha_tester"
-      user_tier: "free" | "pro" | "premium" | "alpha_tester"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
