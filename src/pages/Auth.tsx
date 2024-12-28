@@ -9,13 +9,13 @@ import { Label } from '@/components/ui/label'
 
 export default function Auth() {
   const navigate = useNavigate()
-  const { tier } = useUserTier()
+  const { tier, isLoading } = useUserTier()
   const [showPassword, setShowPassword] = useState(false)
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (event === 'SIGNED_IN') {
+        if (event === 'SIGNED_IN' && !isLoading) {
           switch (tier) {
             case 'alpha_tester':
               navigate('/alpha-tester-dashboard')
@@ -36,7 +36,7 @@ export default function Auth() {
     return () => {
       subscription.unsubscribe()
     }
-  }, [navigate, tier])
+  }, [navigate, tier, isLoading])
 
   return (
     <div className="container max-w-lg mx-auto p-8">

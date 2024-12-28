@@ -1,26 +1,53 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { UploadZone } from '@/components/UploadZone';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Lock, Upload, Image, Download } from 'lucide-react';
+import { Lock, Upload, Image } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { useUserTier } from '@/hooks/use-user-tier';
 
 export default function FreeDashboard() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { tier, isLoading } = useUserTier();
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
 
   useEffect(() => {
     checkAuth();
   }, []);
+
+  useEffect(() => {
+    if (!isLoading && !isAuthChecking && tier !== 'free') {
+      const dashboardRoutes = {
+        'alpha_tester': '/alpha-tester-dashboard',
+        'premium': '/premium-dashboard',
+        'pro': '/pro-dashboard'
+      };
+      
+      const route = dashboardRoutes[tier];
+      if (route) {
+        navigate(route);
+      }
+    }
+  }, [tier, isLoading, isAuthChecking, navigate]);
 
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       navigate('/auth');
     }
+    setIsAuthChecking(false);
   };
+
+  if (isLoading || isAuthChecking) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-foreground">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
