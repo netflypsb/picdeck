@@ -11,7 +11,7 @@ import { useUserTier } from '@/hooks/use-user-tier';
 export default function FreeDashboard() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { tier, isLoading } = useUserTier();
+  const { tier, isLoading, tierData } = useUserTier();
   const [isAuthChecking, setIsAuthChecking] = useState(true);
 
   useEffect(() => {
@@ -19,19 +19,22 @@ export default function FreeDashboard() {
   }, []);
 
   useEffect(() => {
-    if (!isLoading && !isAuthChecking && tier !== 'free') {
+    if (!isLoading && !isAuthChecking && tierData) {
+      console.log('FreeDashboard - Current tier:', tierData.tier) // Debug log
       const dashboardRoutes = {
         'alpha_tester': '/alpha-tester-dashboard',
         'premium': '/premium-dashboard',
         'pro': '/pro-dashboard'
       };
       
-      const route = dashboardRoutes[tier];
-      if (route) {
-        navigate(route);
+      if (tierData.tier !== 'free') {
+        const route = dashboardRoutes[tierData.tier];
+        if (route) {
+          navigate(route);
+        }
       }
     }
-  }, [tier, isLoading, isAuthChecking, navigate]);
+  }, [tier, isLoading, isAuthChecking, tierData, navigate]);
 
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();

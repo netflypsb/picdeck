@@ -9,14 +9,15 @@ import { Label } from '@/components/ui/label'
 
 export default function Auth() {
   const navigate = useNavigate()
-  const { tier, isLoading } = useUserTier()
+  const { tier, isLoading, tierData } = useUserTier()
   const [showPassword, setShowPassword] = useState(false)
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (event === 'SIGNED_IN' && !isLoading) {
-          switch (tier) {
+        if (event === 'SIGNED_IN' && !isLoading && tierData) {
+          console.log('Current tier:', tierData.tier) // Debug log
+          switch (tierData.tier) {
             case 'alpha_tester':
               navigate('/alpha-tester-dashboard')
               break
@@ -36,7 +37,7 @@ export default function Auth() {
     return () => {
       subscription.unsubscribe()
     }
-  }, [navigate, tier, isLoading])
+  }, [navigate, tier, isLoading, tierData])
 
   return (
     <div className="container max-w-lg mx-auto p-8">
