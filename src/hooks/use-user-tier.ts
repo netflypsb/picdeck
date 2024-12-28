@@ -30,15 +30,17 @@ export const useUserTier = () => {
   };
 
   useEffect(() => {
+    let mounted = true;
+
     const fetchUserTier = async () => {
       try {
-        // Clear any cached session data
-        await supabase.auth.refreshSession();
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!session) {
           console.log('No session found, setting tier to free');
-          setTierData({ tier: 'free', isLoading: false });
+          if (mounted) {
+            setTierData({ tier: 'free', isLoading: false });
+          }
           return;
         }
 
@@ -48,22 +50,36 @@ export const useUserTier = () => {
           .from('profiles')
           .select('tier')
           .eq('id', session.user.id)
-          .single();
+          .maybeSingle();
 
         if (error) {
           console.error('Error fetching user tier:', error);
-          setTierData({ tier: 'free', isLoading: false });
+          if (mounted) {
+            setTierData({ tier: 'free', isLoading: false });
+          }
+          return;
+        }
+
+        if (!profile) {
+          console.log('No profile found, setting tier to free');
+          if (mounted) {
+            setTierData({ tier: 'free', isLoading: false });
+          }
           return;
         }
 
         console.log('User profile data:', profile);
-        setTierData({ 
-          tier: profile.tier as UserTierData['tier'], 
-          isLoading: false 
-        });
+        if (mounted) {
+          setTierData({ 
+            tier: profile.tier as UserTierData['tier'], 
+            isLoading: false 
+          });
+        }
       } catch (error) {
         console.error('Error in useUserTier:', error);
-        setTierData({ tier: 'free', isLoading: false });
+        if (mounted) {
+          setTierData({ tier: 'free', isLoading: false });
+        }
       }
     };
 
@@ -71,10 +87,13 @@ export const useUserTier = () => {
 
     const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
       console.log('Auth state changed:', event);
-      fetchUserTier();
+      if (mounted) {
+        fetchUserTier();
+      }
     });
 
     return () => {
+      mounted = false;
       authListener?.subscription.unsubscribe();
     };
   }, []);

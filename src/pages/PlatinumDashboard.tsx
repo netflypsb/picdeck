@@ -13,25 +13,27 @@ export default function PlatinumDashboard() {
   const { toast } = useToast();
 
   useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        navigate('/auth');
+        return;
+      }
+
+      // Only check tier and redirect if we have loaded the tier data
+      if (!isLoading && tier !== 'platinum') {
+        toast({
+          title: "Access Denied",
+          description: "This dashboard is only available for Platinum tier users.",
+          variant: "destructive"
+        });
+        navigate('/free-dashboard');
+      }
+    };
+
     checkAuth();
-  }, [tier, isLoading]);
-
-  const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      navigate('/auth');
-      return;
-    }
-
-    if (!isLoading && tier !== 'platinum') {
-      toast({
-        title: "Access Denied",
-        description: "This dashboard is only available for Platinum tier users.",
-        variant: "destructive"
-      });
-      navigate('/free-dashboard');
-    }
-  };
+  }, [tier, isLoading, navigate, toast]);
 
   if (isLoading) {
     return (
