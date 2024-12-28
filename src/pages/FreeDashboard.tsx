@@ -1,81 +1,26 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { UploadZone } from '@/components/UploadZone';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Lock, Upload, Image } from 'lucide-react';
+import { Lock, Upload, Image, Download } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { useUserTier } from '@/hooks/use-user-tier';
-import { UserRole } from '@/types/database';
 
 export default function FreeDashboard() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { tier, isLoading, tierData } = useUserTier();
-  const [isAuthChecking, setIsAuthChecking] = useState(true);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          console.log('No session found, redirecting to auth');
-          navigate('/auth');
-          return;
-        }
-        
-        console.log('User session:', session.user.id);
-        setIsAuthChecking(false);
-      } catch (error) {
-        console.error('Auth check error:', error);
-        toast({
-          title: "Authentication Error",
-          description: "Please try signing in again",
-          variant: "destructive"
-        });
-        navigate('/auth');
-      }
-    };
-
     checkAuth();
-  }, [navigate, toast]);
+  }, []);
 
-  useEffect(() => {
-    if (!isLoading && !isAuthChecking) {
-      console.log('Current tier data:', tierData);
-      console.log('Effective tier:', tier);
-      
-      if (tierData?.tier && tierData.tier !== 'free') {
-        const dashboardRoutes: Record<UserRole, string> = {
-          'premium': '/premium-dashboard',
-          'pro': '/pro-dashboard',
-          'free': '/free-dashboard',
-          'alpha_tester': '/premium-dashboard'
-        };
-
-        const targetRoute = dashboardRoutes[tierData.tier];
-        if (targetRoute && targetRoute !== '/free-dashboard') {
-          console.log(`Redirecting ${tierData.tier} user to ${targetRoute}`);
-          navigate(targetRoute, { replace: true });
-          return;
-        }
-      }
+  const checkAuth = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      navigate('/auth');
     }
-  }, [tier, isLoading, isAuthChecking, tierData, navigate]);
-
-  if (isLoading || isAuthChecking) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-foreground">Loading...</p>
-      </div>
-    );
-  }
-
-  // Only render the dashboard if the user is actually a free tier user
-  if (tierData?.tier && tierData.tier !== 'free') {
-    return null;
-  }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">

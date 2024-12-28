@@ -4,7 +4,7 @@ import { ImagePreview } from '@/components/ImagePreview';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { Download } from 'lucide-react';
-import { processImages, TEMPLATES } from '@/utils/imageProcessor';
+import { TEMPLATES, processImages } from '@/utils/imageProcessor';
 
 export function UploadSection() {
   const [files, setFiles] = useState<File[]>([]);
@@ -47,16 +47,15 @@ export function UploadSection() {
       const zipBlob = await processImages(files);
       const link = document.createElement('a');
       link.href = URL.createObjectURL(zipBlob);
-      link.download = 'processed_images.zip';
+      link.download = 'resized_images.zip';
       link.click();
       URL.revokeObjectURL(link.href);
 
       toast({
         title: "Success!",
-        description: `Images processed for ${TEMPLATES.length} different formats.`,
+        description: "Your images have been processed and downloaded.",
       });
     } catch (error) {
-      console.error('Error processing images:', error);
       toast({
         title: "Error processing images",
         description: error instanceof Error ? error.message : "An error occurred while processing your images.",

@@ -1,54 +1,31 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Auth as SupabaseAuth } from '@supabase/auth-ui-react'
 import { ThemeSupa } from '@supabase/auth-ui-shared'
 import { supabase } from '@/integrations/supabase/client'
 import { useUserTier } from '@/hooks/use-user-tier'
-import { useToast } from '@/hooks/use-toast'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Label } from '@/components/ui/label'
 
 export default function Auth() {
   const navigate = useNavigate()
-  const { toast } = useToast()
-  const { tier, isLoading, tierData, refetch } = useUserTier()
+  const { tier } = useUserTier()
+  const [showPassword, setShowPassword] = useState(false)
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (event === 'SIGNED_IN' && session) {
-          console.log('Auth - Sign in detected, fetching tier data...')
-          
-          // Manually refetch tier data after sign in
-          await refetch()
-          
-          // Wait a moment for tier data to be loaded
-          setTimeout(async () => {
-            console.log('Auth - Current tier:', tier)
-            console.log('Auth - User ID:', session.user.id)
-            
-            // Use the tier for navigation
-            switch (tier) {
-              case 'premium':
-                console.log('Auth - Redirecting to premium dashboard')
-                navigate('/premium-dashboard')
-                break
-              case 'pro':
-                console.log('Auth - Redirecting to pro dashboard')
-                navigate('/pro-dashboard')
-                break
-              case 'free':
-                console.log('Auth - Redirecting to free dashboard')
-                navigate('/free-dashboard')
-                break
-              default:
-                console.error('Unknown tier:', tier)
-                toast({
-                  title: "Error",
-                  description: "Unable to determine user tier",
-                  variant: "destructive"
-                })
-                navigate('/free-dashboard')
-            }
-          }, 1000)
+        if (event === 'SIGNED_IN') {
+          switch (tier) {
+            case 'pro':
+              navigate('/pro-dashboard')
+              break
+            case 'premium':
+              navigate('/premium-dashboard')
+              break
+            default:
+              navigate('/free-dashboard')
+          }
         }
       }
     )
@@ -56,7 +33,7 @@ export default function Auth() {
     return () => {
       subscription.unsubscribe()
     }
-  }, [navigate, isLoading, tierData, toast, refetch, tier])
+  }, [navigate, tier])
 
   return (
     <div className="container max-w-lg mx-auto p-8">
@@ -112,8 +89,15 @@ export default function Auth() {
             },
           },
         }}
-        view="sign_in"
       />
+      <div className="mt-4 flex items-center space-x-2">
+        <Checkbox 
+          id="showPassword" 
+          checked={showPassword} 
+          onCheckedChange={(checked) => setShowPassword(checked as boolean)}
+        />
+        <Label htmlFor="showPassword" className="text-foreground">Show password</Label>
+      </div>
     </div>
   )
 }
