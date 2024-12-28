@@ -48,7 +48,7 @@ export function useUserTier() {
     enabled: !!userId
   })
 
-  // Use tier directly from tierData, removing alpha tester logic
+  // Use tier directly from tierData
   const effectiveTier = tierData?.tier ?? 'free'
   console.log('useUserTier - Effective tier:', effectiveTier)
 

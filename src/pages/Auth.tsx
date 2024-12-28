@@ -22,33 +22,31 @@ export default function Auth() {
           
           // Wait a moment for tier data to be loaded
           setTimeout(async () => {
-            if (tierData) {
-              console.log('Auth - Current tier:', tier)
-              console.log('Auth - User ID:', session.user.id)
-              
-              // Use the effective tier for navigation
-              switch (tier) {
-                case 'premium':
-                  navigate('/premium-dashboard')
-                  break
-                case 'pro':
-                  navigate('/pro-dashboard')
-                  break
-                case 'free':
-                  navigate('/free-dashboard')
-                  break
-                default:
-                  console.error('Unknown tier:', tier)
-                  toast({
-                    title: "Error",
-                    description: "Unable to determine user tier",
-                    variant: "destructive"
-                  })
-                  navigate('/free-dashboard')
-              }
-            } else {
-              console.log('Auth - No tier data available, redirecting to free dashboard')
-              navigate('/free-dashboard')
+            console.log('Auth - Current tier:', tier)
+            console.log('Auth - User ID:', session.user.id)
+            
+            // Use the tier for navigation
+            switch (tier) {
+              case 'premium':
+                console.log('Auth - Redirecting to premium dashboard')
+                navigate('/premium-dashboard')
+                break
+              case 'pro':
+                console.log('Auth - Redirecting to pro dashboard')
+                navigate('/pro-dashboard')
+                break
+              case 'free':
+                console.log('Auth - Redirecting to free dashboard')
+                navigate('/free-dashboard')
+                break
+              default:
+                console.error('Unknown tier:', tier)
+                toast({
+                  title: "Error",
+                  description: "Unable to determine user tier",
+                  variant: "destructive"
+                })
+                navigate('/free-dashboard')
             }
           }, 1000)
         }
