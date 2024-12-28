@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Check } from 'lucide-react';
 import { Template } from '@/utils/templates';
 import { ScrollArea } from '@/components/ui/scroll-area';
