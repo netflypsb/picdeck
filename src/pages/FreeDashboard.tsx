@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Lock, Upload, Image } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { useUserTier } from '@/hooks/use-user-tier';
+import { UserRole } from '@/types/database';
 
 export default function FreeDashboard() {
   const navigate = useNavigate();
@@ -14,27 +15,39 @@ export default function FreeDashboard() {
   const { tier, isLoading, tierData } = useUserTier();
   const [isAuthChecking, setIsAuthChecking] = useState(true);
 
+  // First useEffect to handle auth check
   useEffect(() => {
     checkAuth();
   }, []);
 
+  // Separate useEffect to handle tier-based routing
   useEffect(() => {
-    if (!isLoading && !isAuthChecking && tierData) {
-      console.log('FreeDashboard - Current tier:', tierData.tier); // Debug log
-      const dashboardRoutes = {
-        'alpha_tester': '/alpha-tester-dashboard',
-        'premium': '/premium-dashboard',
-        'pro': '/pro-dashboard'
-      };
-      
-      if (tierData.tier !== 'free') {
-        console.log('Redirecting to:', dashboardRoutes[tierData.tier]); // Debug log
-        const route = dashboardRoutes[tierData.tier];
-        if (route) {
-          navigate(route, { replace: true }); // Using replace to prevent back navigation
+    const handleTierRouting = async () => {
+      if (!isLoading && !isAuthChecking && tierData?.tier) {
+        console.log('Current tier:', tierData.tier);
+        
+        // Early return if user is free tier
+        if (tierData.tier === 'free') {
+          return;
+        }
+
+        // Define dashboard routes
+        const dashboardRoutes: Record<UserRole, string> = {
+          'alpha_tester': '/alpha-tester-dashboard',
+          'premium': '/premium-dashboard',
+          'pro': '/pro-dashboard',
+          'free': '/free-dashboard'
+        };
+
+        const targetRoute = dashboardRoutes[tierData.tier];
+        if (targetRoute) {
+          console.log(`Redirecting ${tierData.tier} user to ${targetRoute}`);
+          navigate(targetRoute, { replace: true });
         }
       }
-    }
+    };
+
+    handleTierRouting();
   }, [tier, isLoading, isAuthChecking, tierData, navigate]);
 
   const checkAuth = async () => {
@@ -45,9 +58,7 @@ export default function FreeDashboard() {
         return;
       }
       
-      // Additional debug log
       console.log('User session:', session.user.id);
-      
       setIsAuthChecking(false);
     } catch (error) {
       console.error('Auth check error:', error);
@@ -66,6 +77,11 @@ export default function FreeDashboard() {
         <p className="text-foreground">Loading...</p>
       </div>
     );
+  }
+
+  // If user is not free tier, show nothing while redirecting
+  if (tierData?.tier && tierData.tier !== 'free') {
+    return null;
   }
 
   return (
