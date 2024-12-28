@@ -9,7 +9,69 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      contact_messages: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          message: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          message: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          message?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      user_tiers: {
+        Row: {
+          created_at: string | null
+          end_date: string | null
+          start_date: string | null
+          stripe_status:
+            | Database["public"]["Enums"]["subscription_status"]
+            | null
+          stripe_subscription_id: string | null
+          tier: Database["public"]["Enums"]["user_role"] | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          end_date?: string | null
+          start_date?: string | null
+          stripe_status?:
+            | Database["public"]["Enums"]["subscription_status"]
+            | null
+          stripe_subscription_id?: string | null
+          tier?: Database["public"]["Enums"]["user_role"] | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          end_date?: string | null
+          start_date?: string | null
+          stripe_status?:
+            | Database["public"]["Enums"]["subscription_status"]
+            | null
+          stripe_subscription_id?: string | null
+          tier?: Database["public"]["Enums"]["user_role"] | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +80,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      subscription_status: "active" | "cancelled" | "past_due" | "incomplete"
+      user_role: "free" | "pro" | "premium" | "alpha_tester"
     }
     CompositeTypes: {
       [_ in never]: never
