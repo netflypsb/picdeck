@@ -20,7 +20,7 @@ export default function FreeDashboard() {
 
   useEffect(() => {
     if (!isLoading && !isAuthChecking && tierData) {
-      console.log('FreeDashboard - Current tier:', tierData.tier) // Debug log
+      console.log('FreeDashboard - Current tier:', tierData.tier); // Debug log
       const dashboardRoutes = {
         'alpha_tester': '/alpha-tester-dashboard',
         'premium': '/premium-dashboard',
@@ -28,20 +28,36 @@ export default function FreeDashboard() {
       };
       
       if (tierData.tier !== 'free') {
+        console.log('Redirecting to:', dashboardRoutes[tierData.tier]); // Debug log
         const route = dashboardRoutes[tierData.tier];
         if (route) {
-          navigate(route);
+          navigate(route, { replace: true }); // Using replace to prevent back navigation
         }
       }
     }
   }, [tier, isLoading, isAuthChecking, tierData, navigate]);
 
   const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate('/auth');
+        return;
+      }
+      
+      // Additional debug log
+      console.log('User session:', session.user.id);
+      
+      setIsAuthChecking(false);
+    } catch (error) {
+      console.error('Auth check error:', error);
+      toast({
+        title: "Authentication Error",
+        description: "Please try signing in again",
+        variant: "destructive"
+      });
       navigate('/auth');
     }
-    setIsAuthChecking(false);
   };
 
   if (isLoading || isAuthChecking) {
