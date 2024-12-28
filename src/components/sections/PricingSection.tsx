@@ -37,8 +37,8 @@ export function PricingSection() {
       return;
     }
 
-    // For now, assign a 30-day trial
-    await assignTier(selectedTier, 30);
+    // For now, assign the selected tier
+    await assignTier(selectedTier);
     navigate(`/${selectedTier.toLowerCase()}-dashboard`);
   }
 
