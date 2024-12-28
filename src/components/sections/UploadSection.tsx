@@ -4,7 +4,7 @@ import { ImagePreview } from '@/components/ImagePreview';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { Download } from 'lucide-react';
-import { TEMPLATES, processImages } from '@/utils/imageProcessor';
+import { processImages } from '@/utils/imageProcessor';
 
 export function UploadSection() {
   const [files, setFiles] = useState<File[]>([]);
@@ -47,7 +47,7 @@ export function UploadSection() {
       const zipBlob = await processImages(files);
       const link = document.createElement('a');
       link.href = URL.createObjectURL(zipBlob);
-      link.download = 'resized_images.zip';
+      link.download = 'processed_images.zip';
       link.click();
       URL.revokeObjectURL(link.href);
 
