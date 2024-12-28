@@ -73,5 +73,6 @@ export function useUserTier() {
     isLoading,
     error,
     assignTier,
+    refetch, // Added refetch to the return object
   }
 }
