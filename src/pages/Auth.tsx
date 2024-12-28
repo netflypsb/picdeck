@@ -16,24 +16,38 @@ export default function Auth() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_IN' && session) {
-          console.log('User signed in, waiting for tier data...')
+          console.log('User signed in:', session.user.id)
           
-          // Wait for tier data to be loaded
           const waitForTier = () => {
             if (!isLoading) {
-              console.log('Routing user with tier:', tier)
+              console.log('User tier loaded:', tier)
               
-              // Map tier to dashboard route
-              const dashboardRoutes = {
-                'platinum': '/platinum-dashboard',
-                'premium': '/premium-dashboard',
-                'pro': '/pro-dashboard',
-                'free': '/free-dashboard'
-              }
-              
-              const route = dashboardRoutes[tier] || '/free-dashboard'
-              console.log('Navigating to:', route)
-              navigate(route)
+              // Force a fresh check of the tier
+              supabase
+                .from('profiles')
+                .select('tier')
+                .eq('id', session.user.id)
+                .single()
+                .then(({ data: profile, error }) => {
+                  if (error) {
+                    console.error('Error double-checking tier:', error)
+                    return
+                  }
+                  
+                  const confirmedTier = profile?.tier || 'free'
+                  console.log('Confirmed tier from database:', confirmedTier)
+                  
+                  const dashboardRoutes = {
+                    'platinum': '/platinum-dashboard',
+                    'premium': '/premium-dashboard',
+                    'pro': '/pro-dashboard',
+                    'free': '/free-dashboard'
+                  }
+                  
+                  const route = dashboardRoutes[confirmedTier] || '/free-dashboard'
+                  console.log('Navigating to:', route)
+                  navigate(route)
+                })
             } else {
               console.log('Tier data still loading, retrying...')
               setTimeout(waitForTier, 100)

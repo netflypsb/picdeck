@@ -32,9 +32,12 @@ export const useUserTier = () => {
   useEffect(() => {
     const fetchUserTier = async () => {
       try {
+        // Clear any cached session data
+        await supabase.auth.refreshSession();
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!session) {
+          console.log('No session found, setting tier to free');
           setTierData({ tier: 'free', isLoading: false });
           return;
         }
@@ -66,7 +69,8 @@ export const useUserTier = () => {
 
     fetchUserTier();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
+      console.log('Auth state changed:', event);
       fetchUserTier();
     });
 
