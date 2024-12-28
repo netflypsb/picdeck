@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 
 export default function Auth() {
   const navigate = useNavigate()
-  const { tier, isLoading, tierData } = useUserTier()
+  const { tier, isLoading } = useUserTier()
   const [showPassword, setShowPassword] = useState(false)
 
   useEffect(() => {
@@ -18,13 +18,15 @@ export default function Auth() {
         if (event === 'SIGNED_IN' && session) {
           console.log('User signed in, waiting for tier data...')
           
-          // Wait for tier data to be available
           const checkTierAndNavigate = () => {
             if (!isLoading) {
               console.log('Current tier:', tier)
-              console.log('Full tier data:', tierData)
-
+              
               switch (tier) {
+                case 'platinum':
+                  console.log('Navigating to platinum dashboard')
+                  navigate('/platinum-dashboard')
+                  break
                 case 'premium':
                   console.log('Navigating to premium dashboard')
                   navigate('/premium-dashboard')
@@ -51,9 +53,8 @@ export default function Auth() {
     return () => {
       subscription.unsubscribe()
     }
-  }, [navigate, tier, isLoading, tierData])
+  }, [navigate, tier, isLoading])
 
-  // Show loading state while checking tier
   if (isLoading) {
     return (
       <div className="container max-w-lg mx-auto p-8 flex items-center justify-center">
