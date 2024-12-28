@@ -1,5 +1,9 @@
 import JSZip from 'jszip';
 import { Template } from './templates';
+import { adTemplates, premiumTemplates } from './templates';
+
+// Combine all templates
+export const TEMPLATES = [...adTemplates, ...premiumTemplates];
 
 export type WatermarkPosition = 'top-left' | 'top-right' | 'center' | 'bottom-left' | 'bottom-right';
 
@@ -80,7 +84,7 @@ const addWatermark = (
 const resizeAndWatermark = async (
   file: File,
   template: Template,
-  watermarkSettings: WatermarkSettings
+  watermarkSettings?: WatermarkSettings
 ): Promise<Blob> => {
   const img = await createImage(file);
   const canvas = document.createElement('canvas');
@@ -109,8 +113,10 @@ const resizeAndWatermark = async (
   ctx.fillRect(0, 0, template.width, template.height);
   ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
 
-  // Add watermark
-  addWatermark(canvas, ctx, watermarkSettings);
+  // Add watermark if settings are provided
+  if (watermarkSettings) {
+    addWatermark(canvas, ctx, watermarkSettings);
+  }
 
   // Clean up
   URL.revokeObjectURL(img.src);
@@ -124,6 +130,38 @@ const resizeAndWatermark = async (
       }
     }, 'image/jpeg', 0.9);
   });
+};
+
+// Export the main processing functions
+export const processImages = async (files: File[]): Promise<Blob> => {
+  try {
+    const zip = new JSZip();
+    const processedFiles = await Promise.all(
+      files.map(async (file) => {
+        const results = await Promise.all(
+          TEMPLATES.map(async (template) => {
+            const processed = await resizeAndWatermark(file, template);
+            return {
+              name: `${file.name.split('.')[0]}_${template.name.toLowerCase().replace(/\s+/g, '_')}.jpg`,
+              blob: processed
+            };
+          })
+        );
+        return results;
+      })
+    );
+
+    // Add all processed images to the zip file
+    processedFiles.flat().forEach(({ name, blob }) => {
+      zip.file(name, blob);
+    });
+
+    // Generate the zip file
+    return await zip.generateAsync({ type: 'blob' });
+  } catch (error) {
+    console.error('Error processing images:', error);
+    throw error;
+  }
 };
 
 export const processImagesWithWatermark = async (
