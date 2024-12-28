@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { Crown, Image, Upload, Settings } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { premiumTemplates, adTemplates } from '@/utils/templates';
@@ -16,12 +15,11 @@ export default function PremiumDashboard() {
   const { tier } = useUserTier();
 
   useEffect(() => {
-    checkAuth();
-  }, []);
+    checkAccess();
+  }, [tier]);
 
-  const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
+  const checkAccess = async () => {
+    if (!tier) {
       navigate('/auth');
       return;
     }
@@ -29,7 +27,7 @@ export default function PremiumDashboard() {
     if (tier !== 'premium' && tier !== 'alpha_tester') {
       toast({
         title: "Access Denied",
-        description: "This dashboard is only available for Premium tier users.",
+        description: "This dashboard is only available for Premium tier and Alpha Tester users.",
         variant: "destructive"
       });
       navigate('/free-dashboard');
