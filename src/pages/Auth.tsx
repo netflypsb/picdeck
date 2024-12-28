@@ -18,43 +18,33 @@ export default function Auth() {
         if (event === 'SIGNED_IN' && session) {
           console.log('User signed in:', session.user.id)
           
-          const waitForTier = () => {
-            if (!isLoading) {
-              console.log('User tier loaded:', tier)
-              
-              // Force a fresh check of the tier
-              supabase
-                .from('profiles')
-                .select('tier')
-                .eq('id', session.user.id)
-                .single()
-                .then(({ data: profile, error }) => {
-                  if (error) {
-                    console.error('Error double-checking tier:', error)
-                    return
-                  }
-                  
-                  const confirmedTier = profile?.tier || 'free'
-                  console.log('Confirmed tier from database:', confirmedTier)
-                  
-                  const dashboardRoutes = {
-                    'platinum': '/platinum-dashboard',
-                    'premium': '/premium-dashboard',
-                    'pro': '/pro-dashboard',
-                    'free': '/free-dashboard'
-                  }
-                  
-                  const route = dashboardRoutes[confirmedTier] || '/free-dashboard'
-                  console.log('Navigating to:', route)
-                  navigate(route)
-                })
-            } else {
-              console.log('Tier data still loading, retrying...')
-              setTimeout(waitForTier, 100)
-            }
+          // Direct database query to get the user's tier
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('tier')
+            .eq('id', session.user.id)
+            .single()
+
+          if (error) {
+            console.error('Error fetching user tier:', error)
+            return
           }
 
-          waitForTier()
+          if (profile) {
+            console.log('User profile loaded:', profile)
+            const userTier = profile.tier
+            
+            const dashboardRoutes = {
+              'platinum': '/platinum-dashboard',
+              'premium': '/premium-dashboard',
+              'pro': '/pro-dashboard',
+              'free': '/free-dashboard'
+            }
+
+            const route = dashboardRoutes[userTier] || '/free-dashboard'
+            console.log('Redirecting to:', route)
+            navigate(route)
+          }
         }
       }
     )
@@ -62,7 +52,7 @@ export default function Auth() {
     return () => {
       subscription.unsubscribe()
     }
-  }, [navigate, tier, isLoading])
+  }, [navigate])
 
   if (isLoading) {
     return (
