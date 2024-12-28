@@ -1,16 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Auth as SupabaseAuth } from '@supabase/auth-ui-react'
 import { ThemeSupa } from '@supabase/auth-ui-shared'
 import { supabase } from '@/integrations/supabase/client'
 import { useUserTier } from '@/hooks/use-user-tier'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Label } from '@/components/ui/label'
 
 export default function Auth() {
   const navigate = useNavigate()
   const { tierData, isLoading } = useUserTier()
-  const [showPassword, setShowPassword] = useState(false)
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -94,14 +91,6 @@ export default function Auth() {
           },
         }}
       />
-      <div className="mt-4 flex items-center space-x-2">
-        <Checkbox 
-          id="showPassword" 
-          checked={showPassword} 
-          onCheckedChange={(checked) => setShowPassword(checked as boolean)}
-        />
-        <Label htmlFor="showPassword" className="text-foreground">Show password</Label>
-      </div>
     </div>
   )
 }
