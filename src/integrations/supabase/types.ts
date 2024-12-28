@@ -37,6 +37,7 @@ export type Database = {
         Row: {
           created_at: string | null
           end_date: string | null
+          is_alpha: boolean
           start_date: string | null
           stripe_status:
             | Database["public"]["Enums"]["subscription_status"]
@@ -49,6 +50,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           end_date?: string | null
+          is_alpha?: boolean
           start_date?: string | null
           stripe_status?:
             | Database["public"]["Enums"]["subscription_status"]
@@ -61,6 +63,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           end_date?: string | null
+          is_alpha?: boolean
           start_date?: string | null
           stripe_status?:
             | Database["public"]["Enums"]["subscription_status"]

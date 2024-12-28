@@ -18,4 +18,5 @@ export interface FeatureFlag {
   name: string;
   description: string;
   enabled_for: UserRole[];
+  is_alpha_feature?: boolean;
 }

@@ -6,6 +6,7 @@ import { UserRole } from '@/types/database'
 
 export type UserTier = {
   tier: UserRole;
+  is_alpha: boolean;
   start_date: string;
   end_date: string | null;
   stripe_subscription_id: string | null;
@@ -67,12 +68,15 @@ export function useUserTier() {
     }
   }
 
+  // If user is an alpha tester, treat them as premium tier
+  const effectiveTier = tierData?.is_alpha ? 'premium' : tierData?.tier ?? 'free'
+
   return {
-    tier: tierData?.tier ?? 'free',
+    tier: effectiveTier,
     tierData,
     isLoading,
     error,
     assignTier,
-    refetch, // Added refetch to the return object
+    refetch,
   }
 }
