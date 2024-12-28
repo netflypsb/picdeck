@@ -90,7 +90,14 @@ export default function Auth() {
             },
           },
         }}
-        showPasswordInput={false}
+        view={{
+          sign_in: {
+            showPassword: false
+          },
+          sign_up: {
+            showPassword: false
+          }
+        }}
       />
     </div>
   )
