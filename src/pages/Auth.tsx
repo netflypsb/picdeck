@@ -9,40 +9,50 @@ import { useToast } from '@/hooks/use-toast'
 export default function Auth() {
   const navigate = useNavigate()
   const { toast } = useToast()
-  const { tier, isLoading, tierData } = useUserTier()
+  const { tier, isLoading, tierData, refetch } = useUserTier()
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_IN' && session) {
-          // Wait for tier data to be loaded before redirecting
-          if (!isLoading && tierData) {
-            console.log('Auth - Current tier:', tierData.tier)
-            console.log('Auth - User ID:', session.user.id)
-            
-            switch (tierData.tier) {
-              case 'alpha_tester':
-                navigate('/alpha-tester-dashboard')
-                break
-              case 'premium':
-                navigate('/premium-dashboard')
-                break
-              case 'pro':
-                navigate('/pro-dashboard')
-                break
-              case 'free':
-                navigate('/free-dashboard')
-                break
-              default:
-                console.error('Unknown tier:', tierData.tier)
-                toast({
-                  title: "Error",
-                  description: "Unable to determine user tier",
-                  variant: "destructive"
-                })
-                navigate('/free-dashboard')
+          console.log('Auth - Sign in detected, fetching tier data...')
+          
+          // Manually refetch tier data after sign in
+          await refetch()
+          
+          // Wait a moment for tier data to be loaded
+          setTimeout(async () => {
+            if (tierData) {
+              console.log('Auth - Current tier:', tierData.tier)
+              console.log('Auth - User ID:', session.user.id)
+              
+              switch (tierData.tier) {
+                case 'alpha_tester':
+                  navigate('/alpha-tester-dashboard')
+                  break
+                case 'premium':
+                  navigate('/premium-dashboard')
+                  break
+                case 'pro':
+                  navigate('/pro-dashboard')
+                  break
+                case 'free':
+                  navigate('/free-dashboard')
+                  break
+                default:
+                  console.error('Unknown tier:', tierData.tier)
+                  toast({
+                    title: "Error",
+                    description: "Unable to determine user tier",
+                    variant: "destructive"
+                  })
+                  navigate('/free-dashboard')
+              }
+            } else {
+              console.log('Auth - No tier data available, redirecting to free dashboard')
+              navigate('/free-dashboard')
             }
-          }
+          }, 1000) // Give a short delay to ensure tier data is loaded
         }
       }
     )
@@ -50,7 +60,7 @@ export default function Auth() {
     return () => {
       subscription.unsubscribe()
     }
-  }, [navigate, isLoading, tierData, toast])
+  }, [navigate, isLoading, tierData, toast, refetch])
 
   return (
     <div className="container max-w-lg mx-auto p-8">
