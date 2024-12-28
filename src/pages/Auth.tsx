@@ -90,6 +90,7 @@ export default function Auth() {
             },
           },
         }}
+        showPasswordInput={false}
       />
     </div>
   )
