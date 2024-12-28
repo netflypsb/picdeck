@@ -33,6 +33,30 @@ export type Database = {
         }
         Relationships: []
       }
+      feature_flags: {
+        Row: {
+          created_at: string
+          description: string
+          enabled_for: Database["public"]["Enums"]["user_role"][]
+          id: string
+          name: Database["public"]["Enums"]["feature_name"]
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          enabled_for: Database["public"]["Enums"]["user_role"][]
+          id?: string
+          name: Database["public"]["Enums"]["feature_name"]
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          enabled_for?: Database["public"]["Enums"]["user_role"][]
+          id?: string
+          name?: Database["public"]["Enums"]["feature_name"]
+        }
+        Relationships: []
+      }
       user_tiers: {
         Row: {
           created_at: string
@@ -80,7 +104,13 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      feature_name:
+        | "basicTemplates"
+        | "advancedTemplates"
+        | "customWatermarks"
+        | "experimentalFeatures"
       subscription_status: "active" | "cancelled" | "past_due" | "incomplete"
+      user_role: "free" | "pro" | "premium" | "alpha_tester"
       user_tier: "free" | "pro" | "premium" | "alpha_tester"
     }
     CompositeTypes: {
