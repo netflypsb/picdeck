@@ -26,10 +26,8 @@ export default function Auth() {
               console.log('Auth - Current tier:', tierData.tier)
               console.log('Auth - User ID:', session.user.id)
               
-              switch (tierData.tier) {
-                case 'alpha_tester':
-                  navigate('/alpha-tester-dashboard')
-                  break
+              // Use the effective tier which already handles alpha testers as premium
+              switch (tier) {
                 case 'premium':
                   navigate('/premium-dashboard')
                   break
@@ -40,7 +38,7 @@ export default function Auth() {
                   navigate('/free-dashboard')
                   break
                 default:
-                  console.error('Unknown tier:', tierData.tier)
+                  console.error('Unknown tier:', tier)
                   toast({
                     title: "Error",
                     description: "Unable to determine user tier",
@@ -60,7 +58,7 @@ export default function Auth() {
     return () => {
       subscription.unsubscribe()
     }
-  }, [navigate, isLoading, tierData, toast, refetch])
+  }, [navigate, isLoading, tierData, toast, refetch, tier]) // Added tier to dependencies
 
   return (
     <div className="container max-w-lg mx-auto p-8">
