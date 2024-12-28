@@ -15,10 +15,18 @@ export default function Auth() {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (event === 'SIGNED_IN') {
-          // Add a small delay to ensure tier data is loaded
-          setTimeout(() => {
-            console.log('Current tier:', tier)
+        if (event === 'SIGNED_IN' && session) {
+          console.log('User signed in, session:', session)
+
+          // Wait for `tier` data to load before navigating
+          const checkTier = async () => {
+            if (isLoading) {
+              console.log('Waiting for tier data...')
+              return
+            }
+
+            console.log('User tier:', tier)
+
             switch (tier) {
               case 'premium':
                 navigate('/premium-dashboard')
@@ -29,7 +37,15 @@ export default function Auth() {
               default:
                 navigate('/free-dashboard')
             }
-          }, 1000) // 1 second delay to ensure tier data is loaded
+          }
+
+          // Retry until `tier` is available
+          const interval = setInterval(async () => {
+            if (!isLoading) {
+              clearInterval(interval)
+              await checkTier()
+            }
+          }, 500)
         }
       }
     )
@@ -37,7 +53,7 @@ export default function Auth() {
     return () => {
       subscription.unsubscribe()
     }
-  }, [navigate, tier])
+  }, [navigate, tier, isLoading])
 
   // Show loading state while checking tier
   if (isLoading) {
@@ -52,7 +68,7 @@ export default function Auth() {
     <div className="container max-w-lg mx-auto p-8">
       <SupabaseAuth
         supabaseClient={supabase}
-        appearance={{ 
+        appearance={{
           theme: ThemeSupa,
           style: {
             input: {
@@ -104,9 +120,9 @@ export default function Auth() {
         }}
       />
       <div className="mt-4 flex items-center space-x-2">
-        <Checkbox 
-          id="showPassword" 
-          checked={showPassword} 
+        <Checkbox
+          id="showPassword"
+          checked={showPassword}
           onCheckedChange={(checked) => setShowPassword(checked as boolean)}
         />
         <Label htmlFor="showPassword" className="text-foreground">Show password</Label>
