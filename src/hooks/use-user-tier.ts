@@ -12,6 +12,23 @@ export const useUserTier = () => {
     isLoading: true,
   });
 
+  const assignTier = async (userId: string, newTier: UserTierData['tier']) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ tier: newTier })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      setTierData(prev => ({ ...prev, tier: newTier }));
+      return { error: null };
+    } catch (error) {
+      console.error('Error assigning tier:', error);
+      return { error };
+    }
+  };
+
   useEffect(() => {
     const fetchUserTier = async () => {
       try {
@@ -62,5 +79,6 @@ export const useUserTier = () => {
     tier: tierData.tier,
     isLoading: tierData.isLoading,
     tierData,
+    assignTier,
   };
 };
