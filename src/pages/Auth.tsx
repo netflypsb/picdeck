@@ -4,26 +4,42 @@ import { Auth as SupabaseAuth } from '@supabase/auth-ui-react'
 import { ThemeSupa } from '@supabase/auth-ui-shared'
 import { supabase } from '@/integrations/supabase/client'
 import { useUserTier } from '@/hooks/use-user-tier'
+import { useToast } from '@/hooks/use-toast'
 
 export default function Auth() {
   const navigate = useNavigate()
-  const { tierData, isLoading } = useUserTier()
+  const { toast } = useToast()
+  const { tier, isLoading, tierData } = useUserTier()
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (event === 'SIGNED_IN') {
+        if (event === 'SIGNED_IN' && session) {
+          // Wait for tier data to be loaded before redirecting
           if (!isLoading && tierData) {
             console.log('Auth - Current tier:', tierData.tier)
+            console.log('Auth - User ID:', session.user.id)
+            
             switch (tierData.tier) {
               case 'alpha_tester':
+                navigate('/alpha-tester-dashboard')
+                break
               case 'premium':
                 navigate('/premium-dashboard')
                 break
               case 'pro':
                 navigate('/pro-dashboard')
                 break
+              case 'free':
+                navigate('/free-dashboard')
+                break
               default:
+                console.error('Unknown tier:', tierData.tier)
+                toast({
+                  title: "Error",
+                  description: "Unable to determine user tier",
+                  variant: "destructive"
+                })
                 navigate('/free-dashboard')
             }
           }
@@ -34,7 +50,7 @@ export default function Auth() {
     return () => {
       subscription.unsubscribe()
     }
-  }, [navigate, isLoading, tierData])
+  }, [navigate, isLoading, tierData, toast])
 
   return (
     <div className="container max-w-lg mx-auto p-8">
