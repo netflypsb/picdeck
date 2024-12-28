@@ -20,6 +20,7 @@ export default function FreeDashboard() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
+          console.log('No session found, redirecting to auth');
           navigate('/auth');
           return;
         }
@@ -41,19 +42,20 @@ export default function FreeDashboard() {
   }, [navigate, toast]);
 
   useEffect(() => {
-    if (!isLoading && !isAuthChecking && tierData?.tier) {
-      console.log('Current tier:', tierData.tier);
+    if (!isLoading && !isAuthChecking) {
+      console.log('Current tier data:', tierData);
+      console.log('Effective tier:', tier);
       
-      if (tierData.tier !== 'free') {
+      if (tierData?.tier && tierData.tier !== 'free') {
         const dashboardRoutes: Record<UserRole, string> = {
-          'alpha_tester': '/alpha-tester-dashboard',
           'premium': '/premium-dashboard',
           'pro': '/pro-dashboard',
-          'free': '/free-dashboard'
+          'free': '/free-dashboard',
+          'alpha_tester': '/premium-dashboard'
         };
 
         const targetRoute = dashboardRoutes[tierData.tier];
-        if (targetRoute) {
+        if (targetRoute && targetRoute !== '/free-dashboard') {
           console.log(`Redirecting ${tierData.tier} user to ${targetRoute}`);
           navigate(targetRoute, { replace: true });
           return;

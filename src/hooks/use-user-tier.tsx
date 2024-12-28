@@ -20,6 +20,7 @@ export function useUserTier() {
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession()
+      console.log('useUserTier - Session:', session?.user?.id)
       setUserId(session?.user?.id ?? null)
     }
     checkAuth()
@@ -30,17 +31,27 @@ export function useUserTier() {
     queryFn: async () => {
       if (!userId) return null
       
+      console.log('useUserTier - Fetching tier data for user:', userId)
       const { data, error } = await supabase
         .from('user_tiers')
         .select('*')
         .eq('user_id', userId)
         .single()
 
-      if (error) throw error
+      if (error) {
+        console.error('useUserTier - Error fetching tier:', error)
+        throw error
+      }
+      
+      console.log('useUserTier - Fetched tier data:', data)
       return data as UserTier
     },
     enabled: !!userId
   })
+
+  // If user is an alpha tester, treat them as premium tier
+  const effectiveTier = tierData?.is_alpha ? 'premium' : tierData?.tier ?? 'free'
+  console.log('useUserTier - Effective tier:', effectiveTier)
 
   const assignTier = async (tier: UserRole, duration?: number) => {
     try {
@@ -67,9 +78,6 @@ export function useUserTier() {
       })
     }
   }
-
-  // If user is an alpha tester, treat them as premium tier
-  const effectiveTier = tierData?.is_alpha ? 'premium' : tierData?.tier ?? 'free'
 
   return {
     tier: effectiveTier,
