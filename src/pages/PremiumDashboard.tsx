@@ -1,13 +1,19 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { UploadZone } from '@/components/UploadZone';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Crown, Image, Upload, Settings } from 'lucide-react';
 import { Header } from '@/components/Header';
+import { TemplateSelector } from '@/components/TemplateSelector';
+import { Template, premiumTemplates, adTemplates } from '@/utils/templates';
+import { useToast } from '@/hooks/use-toast';
 
 export default function PremiumDashboard() {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [selectedPremiumTemplates, setSelectedPremiumTemplates] = useState<Template[]>([]);
+  const [selectedAdTemplates, setSelectedAdTemplates] = useState<Template[]>([]);
 
   useEffect(() => {
     checkAuth();
@@ -18,6 +24,38 @@ export default function PremiumDashboard() {
     if (!session) {
       navigate('/auth');
     }
+  };
+
+  const handlePremiumTemplateToggle = (template: Template) => {
+    setSelectedPremiumTemplates(prev => {
+      const isSelected = prev.some(t => 
+        t.name === template.name && t.platform === template.platform
+      );
+      
+      if (isSelected) {
+        return prev.filter(t => 
+          t.name !== template.name || t.platform !== template.platform
+        );
+      } else {
+        return [...prev, template];
+      }
+    });
+  };
+
+  const handleAdTemplateToggle = (template: Template) => {
+    setSelectedAdTemplates(prev => {
+      const isSelected = prev.some(t => 
+        t.name === template.name && t.platform === template.platform
+      );
+      
+      if (isSelected) {
+        return prev.filter(t => 
+          t.name !== template.name || t.platform !== template.platform
+        );
+      } else {
+        return [...prev, template];
+      }
+    });
   };
 
   return (
@@ -41,15 +79,27 @@ export default function PremiumDashboard() {
                 Premium Upload
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-6">
               <UploadZone 
-                onFilesSelected={(files) => console.log('Premium files:', files)}
+                onFilesSelected={(files) => {
+                  if (files.length > 50) {
+                    toast({
+                      title: "Too many files",
+                      description: "Premium users can upload up to 50 images at once.",
+                      variant: "destructive"
+                    });
+                    return;
+                  }
+                  // Handle file upload
+                }}
                 maxFiles={50}
                 className="border-primary/50"
               />
-              <p className="text-sm text-muted-foreground mt-4">
-                Upload up to 50 images for premium templates including social media, banners, and thumbnails
-              </p>
+              <TemplateSelector
+                templates={premiumTemplates}
+                selectedTemplates={selectedPremiumTemplates}
+                onTemplateToggle={handlePremiumTemplateToggle}
+              />
             </CardContent>
           </Card>
 
@@ -61,15 +111,27 @@ export default function PremiumDashboard() {
                 Ads Upload
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-6">
               <UploadZone 
-                onFilesSelected={(files) => console.log('Ads files:', files)}
+                onFilesSelected={(files) => {
+                  if (files.length > 50) {
+                    toast({
+                      title: "Too many files",
+                      description: "Premium users can upload up to 50 images at once.",
+                      variant: "destructive"
+                    });
+                    return;
+                  }
+                  // Handle file upload
+                }}
                 maxFiles={50}
                 className="border-primary/50"
               />
-              <p className="text-sm text-muted-foreground mt-4">
-                Upload images for ad-specific templates including Google Ads, Meta Ads, and more
-              </p>
+              <TemplateSelector
+                templates={adTemplates}
+                selectedTemplates={selectedAdTemplates}
+                onTemplateToggle={handleAdTemplateToggle}
+              />
             </CardContent>
           </Card>
         </div>
