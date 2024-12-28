@@ -38,7 +38,7 @@ export function PricingSection() {
     }
 
     // For now, assign the selected tier
-    await assignTier(selectedTier);
+    await assignTier(session.user.id, selectedTier);
     navigate(`/${selectedTier.toLowerCase()}-dashboard`);
   }
 
