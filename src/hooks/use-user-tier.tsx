@@ -6,7 +6,6 @@ import { UserRole } from '@/types/database'
 
 export type UserTier = {
   tier: UserRole;
-  is_alpha: boolean;
   start_date: string;
   end_date: string | null;
   stripe_subscription_id: string | null;
@@ -49,8 +48,8 @@ export function useUserTier() {
     enabled: !!userId
   })
 
-  // If user is an alpha tester, treat them as premium tier
-  const effectiveTier = tierData?.is_alpha ? 'premium' : tierData?.tier ?? 'free'
+  // Use tier directly from tierData, removing alpha tester logic
+  const effectiveTier = tierData?.tier ?? 'free'
   console.log('useUserTier - Effective tier:', effectiveTier)
 
   const assignTier = async (tier: UserRole, duration?: number) => {
