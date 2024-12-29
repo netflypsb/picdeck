@@ -29,7 +29,8 @@ export default function Auth() {
           handleAuthenticatedUser(session);
         } else if (event === 'SIGNED_OUT') {
           navigate('/');
-        } else if (event === 'USER_DELETED') {
+        } else if (event === 'USER_UPDATED' && !session) {
+          // Handle user deletion case when session is null after user update
           toast({
             title: "Account Deleted",
             description: "Your account has been successfully deleted.",
