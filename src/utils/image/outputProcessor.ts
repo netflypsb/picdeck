@@ -1,9 +1,5 @@
 import sharp from 'sharp';
-
-export interface OutputSettings {
-  format: 'png' | 'jpeg' | 'webp';
-  isLossless: boolean;
-}
+import { OutputSettings } from './types';
 
 export async function processImageWithOutputSettings(
   imageBuffer: Buffer,
@@ -21,7 +17,7 @@ export async function processImageWithOutputSettings(
     case 'jpeg':
       pipeline = pipeline.jpeg({
         quality: settings.isLossless ? 100 : 85,
-        mozjpeg: true, // Use mozjpeg for better compression
+        mozjpeg: true,
       });
       break;
     case 'webp':
