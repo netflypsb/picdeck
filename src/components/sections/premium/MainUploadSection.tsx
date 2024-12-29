@@ -3,7 +3,7 @@ import { UploadZone } from '@/components/UploadZone';
 import { ImagePreview } from '@/components/ImagePreview';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download } from 'lucide-react';
+import { Download, Upload } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Progress } from '@/components/ui/progress';
 import { Template, processImages } from '@/utils/imageProcessor';
@@ -53,7 +53,7 @@ export function MainUploadSection() {
     });
   };
 
-  const watermarkRef = useRef<{ applyWatermark: (file: File) => Promise<Blob> }>();
+  const watermarkRef = useRef<{ applyWatermark: (file: File) => Promise<Blob> } | null>(null);
 
   const handleProcessImages = async () => {
     if (!files?.length) {

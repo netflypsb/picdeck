@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Image } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
@@ -6,7 +6,11 @@ import { WatermarkTypeSelector } from './watermark/WatermarkTypeSelector';
 import { WatermarkPlacement } from './watermark/WatermarkPlacement';
 import { WatermarkAdjustments } from './watermark/WatermarkAdjustments';
 
-export function WatermarkSection() {
+interface WatermarkSectionRef {
+  applyWatermark: (file: File) => Promise<Blob>;
+}
+
+export const WatermarkSection = forwardRef<WatermarkSectionRef>((_, ref) => {
   const { toast } = useToast();
   const [watermarkType, setWatermarkType] = useState<'image' | 'text'>('image');
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -46,7 +50,7 @@ export function WatermarkSection() {
         return;
       }
 
-      const img = new Image();
+      const img = document.createElement('img');
       img.onload = () => {
         canvas.width = img.width;
         canvas.height = img.height;
@@ -56,7 +60,7 @@ export function WatermarkSection() {
           ctx.globalAlpha = transparency / 100;
 
           if (watermarkType === 'image' && imageFile) {
-            const watermarkImg = new Image();
+            const watermarkImg = document.createElement('img');
             watermarkImg.onload = () => {
               const scaledWidth = img.width * (scale / 100);
               const scaledHeight = (watermarkImg.height / watermarkImg.width) * scaledWidth;
@@ -137,6 +141,10 @@ export function WatermarkSection() {
     });
   }, [watermarkType, imageFile, text, font, color, transparency, scale, placement, tiling, spacing]);
 
+  useImperativeHandle(ref, () => ({
+    applyWatermark
+  }));
+
   return (
     <Card className="bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <CardHeader>
@@ -177,4 +185,6 @@ export function WatermarkSection() {
       </CardContent>
     </Card>
   );
-}
+});
+
+WatermarkSection.displayName = 'WatermarkSection';
