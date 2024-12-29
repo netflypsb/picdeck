@@ -1,16 +1,18 @@
 import JSZip from 'jszip';
-import { Template, ProcessingOptions } from './types';
-import { applyWatermark } from './watermarkProcessor';
-import { processImageWithOutputSettings } from './outputProcessor';
+import { Template } from './types';
+import { WatermarkSettings, applyWatermark } from './watermarkProcessor';
+import { OutputSettings, processOutputFormat } from './outputProcessor';
 
 export async function processImage(
   file: File,
   template: Template,
-  options: ProcessingOptions
+  watermarkSettings?: WatermarkSettings,
+  outputSettings?: OutputSettings
 ): Promise<Blob> {
-  return new Promise((resolve) => {
+  return new Promise(async (resolve) => {
     const img = new Image();
     img.onload = async () => {
+      // Create canvas for initial image processing
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d')!;
       
@@ -24,36 +26,49 @@ export async function processImage(
       const x = (template.width - img.width * scale) / 2;
       const y = (template.height - img.height * scale) / 2;
       
+      // Fill background and draw image
       ctx.fillStyle = 'white';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
 
-      if (options.watermarkSettings) {
-        await applyWatermark(ctx, canvas, options.watermarkSettings);
+      // Apply watermark if settings provided
+      if (watermarkSettings) {
+        await applyWatermark(ctx, canvas, watermarkSettings);
       }
 
       // Convert canvas to buffer for sharp processing
-      const imageBuffer = await new Promise<Buffer>((resolve) => {
+      const canvasBuffer = await new Promise<Buffer>((resolve) => {
         canvas.toBlob(async (blob) => {
           const arrayBuffer = await blob!.arrayBuffer();
           resolve(Buffer.from(arrayBuffer));
-        }, 'image/png');
+        });
       });
 
-      // Apply output settings if provided, otherwise use default PNG
-      const processedBuffer = options.outputSettings 
-        ? await processImageWithOutputSettings(imageBuffer, options.outputSettings)
-        : imageBuffer;
+      // Process output format with sharp
+      const processedBuffer = await processOutputFormat(
+        canvasBuffer,
+        outputSettings || { format: 'png', isLossless: false }
+      );
 
-      resolve(new Blob([processedBuffer], { 
-        type: `image/${options.outputSettings?.format || 'png'}` 
-      }));
+      // Convert back to blob
+      const finalBlob = new Blob([processedBuffer], { 
+        type: `image/${outputSettings?.format || 'png'}` 
+      });
+      resolve(finalBlob);
     };
     img.src = URL.createObjectURL(file);
   });
 }
 
-export async function processImages(files: File[], options: ProcessingOptions): Promise<Blob> {
+export async function processImages(
+  files: File[],
+  options: {
+    templates: Template[];
+    customSize?: { width: number; height: number };
+    watermarkSettings?: WatermarkSettings;
+    outputSettings?: OutputSettings;
+  }
+): Promise<Blob> {
   const zip = new JSZip();
   
   for (const file of files) {
@@ -64,7 +79,13 @@ export async function processImages(files: File[], options: ProcessingOptions): 
     for (const template of templates) {
       if (template.name === 'All Templates') continue;
       
-      const processedImage = await processImage(file, template, options);
+      const processedImage = await processImage(
+        file, 
+        template, 
+        options.watermarkSettings,
+        options.outputSettings
+      );
+      
       const fileName = file.name.split('.')[0];
       const templateName = template.name.toLowerCase().replace(/\s+/g, '');
       const dimensions = `${template.width}x${template.height}`;

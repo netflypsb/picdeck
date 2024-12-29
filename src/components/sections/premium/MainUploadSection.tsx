@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Template, processImages } from '@/utils/imageProcessor';
@@ -8,21 +8,13 @@ import { UploadZone } from '@/components/UploadZone';
 import { UploadHeader } from './upload/UploadHeader';
 import { ProcessingButton } from './upload/ProcessingButton';
 import { UploadedImages } from './upload/UploadedImages';
-import { OutputSettings } from '@/utils/image/types';
 
 interface MainUploadSectionProps {
   onProcessStart?: () => any;
   onProcessComplete?: () => void;
-  outputFormat?: string;
-  isLossless?: boolean;
 }
 
-export function MainUploadSection({ 
-  onProcessStart, 
-  onProcessComplete,
-  outputFormat = 'png',
-  isLossless = false
-}: MainUploadSectionProps) {
+export function MainUploadSection({ onProcessStart, onProcessComplete }: MainUploadSectionProps) {
   const [files, setFiles] = useState<File[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -32,6 +24,8 @@ export function MainUploadSection({
   const [customHeight, setCustomHeight] = useState(1080);
   const { toast } = useToast();
   const MAX_FILES = 50;
+  const [outputFormat, setOutputFormat] = useState<'png' | 'jpeg' | 'webp'>('png');
+  const [isLossless, setIsLossless] = useState(false);
 
   const handleFilesSelected = (newFiles: File[]) => {
     if (files && files.length + newFiles.length > MAX_FILES) {
@@ -93,18 +87,17 @@ export function MainUploadSection({
       const processedZip = await processImages(files, {
         templates: useCustomSize ? [] : selectedTemplates,
         customSize: useCustomSize ? { width: customWidth, height: customHeight } : undefined,
-        preserveAspectRatio: true,
         watermarkSettings,
         outputSettings: {
-          format: outputFormat as 'png' | 'jpeg' | 'webp',
-          isLossless
+          format: outputFormat,
+          isLossless,
         }
       });
 
       const url = URL.createObjectURL(processedZip);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'processed_images.zip';
+      link.download = `processed_images.${outputFormat}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

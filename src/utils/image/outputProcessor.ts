@@ -1,32 +1,39 @@
 import sharp from 'sharp';
-import { OutputSettings } from './types';
 
-export async function processImageWithOutputSettings(
+export interface OutputSettings {
+  format: 'png' | 'jpeg' | 'webp';
+  isLossless: boolean;
+}
+
+export async function processOutputFormat(
   imageBuffer: Buffer,
   settings: OutputSettings
 ): Promise<Buffer> {
-  let pipeline = sharp(imageBuffer);
-  
+  let processor = sharp(imageBuffer);
+
   switch (settings.format) {
     case 'png':
-      pipeline = pipeline.png({
+      processor = processor.png({
         quality: settings.isLossless ? 100 : 85,
         compressionLevel: settings.isLossless ? 0 : 6,
       });
       break;
     case 'jpeg':
-      pipeline = pipeline.jpeg({
+      processor = processor.jpeg({
         quality: settings.isLossless ? 100 : 85,
-        mozjpeg: true,
+        mozjpeg: !settings.isLossless, // Use mozjpeg for better compression in standard mode
       });
       break;
     case 'webp':
-      pipeline = pipeline.webp({
+      processor = processor.webp({
         quality: settings.isLossless ? 100 : 85,
         lossless: settings.isLossless,
+        effort: settings.isLossless ? 0 : 4, // Lower effort for lossless, higher for lossy
       });
       break;
+    default:
+      processor = processor.png(); // Default to PNG
   }
 
-  return pipeline.toBuffer();
+  return processor.toBuffer();
 }
