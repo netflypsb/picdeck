@@ -9,7 +9,12 @@ import { UploadHeader } from './upload/UploadHeader';
 import { ProcessingButton } from './upload/ProcessingButton';
 import { UploadedImages } from './upload/UploadedImages';
 
-export function MainUploadSection() {
+interface MainUploadSectionProps {
+  onProcessStart?: () => any;
+  onProcessComplete?: () => void;
+}
+
+export function MainUploadSection({ onProcessStart, onProcessComplete }: MainUploadSectionProps) {
   const [files, setFiles] = useState<File[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -74,10 +79,14 @@ export function MainUploadSection() {
     setProgress(0);
 
     try {
+      const watermarkSettings = onProcessStart?.();
+      console.log('Processing with watermark settings:', watermarkSettings);
+
       const processedZip = await processImages(files, {
         templates: useCustomSize ? [] : selectedTemplates,
         customSize: useCustomSize ? { width: customWidth, height: customHeight } : undefined,
-        preserveAspectRatio: true
+        preserveAspectRatio: true,
+        watermarkSettings
       });
 
       const url = URL.createObjectURL(processedZip);
@@ -93,6 +102,8 @@ export function MainUploadSection() {
         title: "Success",
         description: "Images processed and downloaded successfully."
       });
+      
+      onProcessComplete?.();
     } catch (error) {
       console.error('Processing error:', error);
       toast({

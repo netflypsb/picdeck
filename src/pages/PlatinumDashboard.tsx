@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Header } from '@/components/Header';
@@ -15,6 +15,7 @@ export default function PlatinumDashboard() {
   const navigate = useNavigate();
   const { tier, isLoading } = useUserTier();
   const { toast } = useToast();
+  const watermarkRef = useRef<{ getWatermarkSettings: () => any }>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -37,6 +38,10 @@ export default function PlatinumDashboard() {
 
     checkAuth();
   }, [tier, isLoading, navigate, toast]);
+
+  const handleProcessStart = () => {
+    return watermarkRef.current?.getWatermarkSettings();
+  };
 
   if (isLoading) {
     return (
@@ -75,9 +80,11 @@ export default function PlatinumDashboard() {
         </div>
 
         <div className="space-y-8">
-          <MainUploadSection />
+          <MainUploadSection 
+            onProcessStart={handleProcessStart}
+          />
           <OutputSection />
-          <WatermarkSection />
+          <WatermarkSection ref={watermarkRef} />
         </div>
       </main>
 
