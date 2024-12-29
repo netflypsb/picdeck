@@ -37,16 +37,6 @@ export default function PremiumDashboard() {
     checkAuth();
   }, [tier, isLoading, navigate, toast]);
 
-  const handleFormatChange = (format: string) => {
-    console.log('Format changed:', format);
-    // Add any additional format change handling logic here
-  };
-
-  const handleQualityChange = (isLossless: boolean) => {
-    console.log('Quality changed:', isLossless);
-    // Add any additional quality change handling logic here
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -71,15 +61,20 @@ export default function PremiumDashboard() {
               <User className="h-4 w-4" />
               Account
             </Button>
+            <Button
+              variant="outline"
+              onClick={() => navigate('/settings')}
+              className="flex items-center gap-2"
+            >
+              <Settings className="h-4 w-4" />
+              Settings
+            </Button>
           </div>
         </div>
 
         <div className="space-y-8">
           <MainUploadSection />
-          <OutputSection 
-            onFormatChange={handleFormatChange}
-            onQualityChange={handleQualityChange}
-          />
+          <OutputSection />
           <WatermarkSection />
         </div>
       </main>
