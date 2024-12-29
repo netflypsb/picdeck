@@ -9,6 +9,7 @@ import { PasswordCard } from '@/components/account/PasswordCard';
 import { SupportCard } from '@/components/account/SupportCard';
 import { LogOut, ArrowLeft } from 'lucide-react';
 import { useUserTier } from '@/hooks/use-user-tier';
+import { useToast } from '@/components/ui/use-toast';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,6 +25,7 @@ import {
 export default function Account() {
   const navigate = useNavigate();
   const { tier } = useUserTier();
+  const { toast } = useToast();
 
   useEffect(() => {
     checkAuth();
@@ -37,8 +39,33 @@ export default function Account() {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate('/');
+    try {
+      // First clear any existing session data
+      await supabase.auth.clearSession();
+      
+      // Then perform the actual logout
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Logout error:', error);
+        toast({
+          title: "Error",
+          description: "There was a problem logging out. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // If successful, navigate to home
+      navigate('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast({
+        title: "Error",
+        description: "There was a problem logging out. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleBackToDashboard = () => {
