@@ -1,11 +1,43 @@
 import { LogIn, Menu, X } from 'lucide-react';
 import { Button } from './ui/button';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useUserTier } from '@/hooks/use-user-tier';
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
+  const { tier } = useUserTier();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+    };
+
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const getDashboardRoute = () => {
+    switch (tier) {
+      case 'platinum':
+        return '/platinum-dashboard';
+      case 'premium':
+        return '/premium-dashboard';
+      case 'pro':
+        return '/pro-dashboard';
+      default:
+        return '/free-dashboard';
+    }
+  };
 
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
@@ -59,10 +91,16 @@ export function Header() {
         </nav>
 
         <div className="flex items-center">
-          <Button size="sm" onClick={() => navigate('/auth')}>
-            <LogIn className="mr-2 h-4 w-4" />
-            Sign In
-          </Button>
+          {isAuthenticated ? (
+            <Button size="sm" onClick={() => navigate(getDashboardRoute())}>
+              Dashboard
+            </Button>
+          ) : (
+            <Button size="sm" onClick={() => navigate('/auth')}>
+              <LogIn className="mr-2 h-4 w-4" />
+              Sign In
+            </Button>
+          )}
         </div>
       </div>
     </header>

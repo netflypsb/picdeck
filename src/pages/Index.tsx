@@ -1,7 +1,6 @@
 import { Header } from '@/components/Header';
 import { HeroSection } from '@/components/sections/HeroSection';
 import { FeaturesSection } from '@/components/sections/FeaturesSection';
-import { UploadSection } from '@/components/sections/UploadSection';
 import { PricingSection } from '@/components/sections/PricingSection';
 import { TierComparisonSection } from '@/components/sections/TierComparisonSection';
 import { UserGuideSection } from '@/components/sections/UserGuideSection';
@@ -16,11 +15,10 @@ export default function Index() {
       <main className="flex-1">
         <div className="container mx-auto px-4 space-y-16 py-8">
           <HeroSection />
-          <UploadSection />
+          <UserGuideSection />
           <FeaturesSection />
           <TierComparisonSection />
           <PricingSection />
-          <UserGuideSection />
           <FAQSection />
         </div>
       </main>
