@@ -9,13 +9,24 @@ export const useAuthStateChange = (handleAuthenticatedUser: (session: Session) =
   const { toast } = useToast();
 
   useEffect(() => {
+    // Clear any existing sessions that might be corrupted
+    const clearExistingSession = async () => {
+      try {
+        await supabase.auth.signOut();
+        localStorage.removeItem('supabase.auth.token');
+        console.log('Cleared existing session');
+      } catch (error) {
+        console.error('Error clearing session:', error);
+      }
+    };
+
     const checkAndCleanSession = async () => {
       try {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
           console.error('Session error:', sessionError);
-          await supabase.auth.signOut();
+          await clearExistingSession();
           return;
         }
         
@@ -25,10 +36,11 @@ export const useAuthStateChange = (handleAuthenticatedUser: (session: Session) =
         }
       } catch (error) {
         console.error('Error in checkAndCleanSession:', error);
-        await supabase.auth.signOut();
+        await clearExistingSession();
       }
     };
     
+    // Run initial session check
     checkAndCleanSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -51,16 +63,18 @@ export const useAuthStateChange = (handleAuthenticatedUser: (session: Session) =
           case 'TOKEN_REFRESHED':
             if (session) {
               console.log('Token refreshed for user:', session.user.id);
+              handleAuthenticatedUser(session);
             }
             break;
           
           case 'USER_UPDATED':
             if (!session) {
               toast({
-                title: "Account Deleted",
-                description: "Your account has been successfully deleted.",
+                title: "Session Expired",
+                description: "Please sign in again.",
                 variant: "destructive"
               });
+              await clearExistingSession();
               navigate('/');
             }
             break;
