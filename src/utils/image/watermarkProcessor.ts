@@ -1,3 +1,16 @@
+interface WatermarkSettings {
+  type: 'image' | 'text';
+  imageFile?: File;
+  text?: string;
+  font?: string;
+  color?: string;
+  transparency: number;
+  scale: number;
+  placement: string;
+  tiling: boolean;
+  spacing: number;
+}
+
 function calculatePosition(
   canvas: HTMLCanvasElement,
   watermarkWidth: number,
@@ -16,12 +29,10 @@ function calculatePosition(
       y = (canvas.height - watermarkHeight) / 2;
       break;
     case 'bottom-right':
+    default:
       x = canvas.width - watermarkWidth - 10;
       y = canvas.height - watermarkHeight - 10;
       break;
-    default:
-      x = (canvas.width - watermarkWidth) / 2;
-      y = (canvas.height - watermarkHeight) / 2;
   }
   
   return { x, y };
@@ -46,7 +57,7 @@ function generateTilingPositions(
 export async function applyWatermark(
   ctx: CanvasRenderingContext2D,
   canvas: HTMLCanvasElement,
-  settings: any
+  settings: WatermarkSettings
 ): Promise<void> {
   if (!settings) {
     console.log('No watermark settings provided');
@@ -54,12 +65,12 @@ export async function applyWatermark(
   }
 
   console.log('Applying watermark with settings:', settings);
-
   ctx.save();
+  
+  // Set global transparency for watermark
   ctx.globalAlpha = settings.transparency / 100;
 
   if (settings.type === 'image' && settings.imageFile) {
-    console.log('Applying image watermark');
     try {
       const watermarkImg = await createImageBitmap(settings.imageFile);
       const scaledWidth = canvas.width * (settings.scale / 100);
@@ -84,7 +95,6 @@ export async function applyWatermark(
       console.error('Error applying image watermark:', error);
     }
   } else if (settings.type === 'text' && settings.text) {
-    console.log('Applying text watermark');
     const fontSize = Math.floor(canvas.width * (settings.scale / 100));
     ctx.font = `${fontSize}px ${settings.font || 'Arial'}`;
     ctx.fillStyle = settings.color || '#000000';
@@ -111,3 +121,5 @@ export async function applyWatermark(
 
   ctx.restore();
 }
+
+export type { WatermarkSettings };
