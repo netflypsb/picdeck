@@ -5,6 +5,7 @@ import { Header } from '@/components/Header';
 import { AlphaTestingBanner } from '@/components/AlphaTestingBanner';
 import { MainUploadSection } from '@/components/sections/premium/MainUploadSection';
 import { OutputSection } from '@/components/sections/premium/OutputSection';
+import { WatermarkSection } from '@/components/sections/premium/WatermarkSection';
 import { Button } from '@/components/ui/button';
 import { Settings, User } from 'lucide-react';
 import { useUserTier } from '@/hooks/use-user-tier';
@@ -76,6 +77,7 @@ export default function PlatinumDashboard() {
         <div className="space-y-8">
           <MainUploadSection />
           <OutputSection />
+          <WatermarkSection />
         </div>
       </main>
 

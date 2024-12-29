@@ -8,7 +8,6 @@ import { UploadZone } from '@/components/UploadZone';
 import { UploadHeader } from './upload/UploadHeader';
 import { ProcessingButton } from './upload/ProcessingButton';
 import { UploadedImages } from './upload/UploadedImages';
-import { WatermarkSection } from './WatermarkSection';
 
 export function MainUploadSection() {
   const [files, setFiles] = useState<File[]>([]);
@@ -20,7 +19,6 @@ export function MainUploadSection() {
   const [customHeight, setCustomHeight] = useState(1080);
   const { toast } = useToast();
   const MAX_FILES = 50;
-  const watermarkRef = useRef<{ getWatermarkSettings: () => any }>(null);
 
   const handleFilesSelected = (newFiles: File[]) => {
     if (files && files.length + newFiles.length > MAX_FILES) {
@@ -76,14 +74,10 @@ export function MainUploadSection() {
     setProgress(0);
 
     try {
-      const watermarkSettings = watermarkRef.current?.getWatermarkSettings();
-      console.log('Processing with watermark settings:', watermarkSettings);
-      
       const processedZip = await processImages(files, {
         templates: useCustomSize ? [] : selectedTemplates,
         customSize: useCustomSize ? { width: customWidth, height: customHeight } : undefined,
-        preserveAspectRatio: true,
-        watermarkSettings
+        preserveAspectRatio: true
       });
 
       const url = URL.createObjectURL(processedZip);
@@ -118,8 +112,6 @@ export function MainUploadSection() {
     <Card className="bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <UploadHeader />
       <CardContent className="space-y-4">
-        <WatermarkSection ref={watermarkRef} />
-        
         <TemplateSelector
           selectedTemplates={selectedTemplates}
           onTemplateToggle={handleTemplateToggle}
