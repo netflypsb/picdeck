@@ -4,7 +4,7 @@ import { ImagePreview } from '@/components/ImagePreview';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Upload, Download } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
 import { Template, processImages } from '@/utils/imageProcessor';
 import { TemplateSelector } from './TemplateSelector';
@@ -53,6 +53,9 @@ export function MainUploadSection() {
     });
   };
 
+  // Check if processing should be allowed
+  const canProcess = files.length > 0 && (selectedTemplates.length > 0 || useCustomSize);
+
   const handleProcessImages = async () => {
     if (!files?.length) {
       toast({
@@ -65,7 +68,7 @@ export function MainUploadSection() {
 
     if (!selectedTemplates.length && !useCustomSize) {
       toast({
-        title: "No templates selected",
+        title: "No output format selected",
         description: "Please select at least one template or enable custom size.",
         variant: "destructive"
       });
@@ -77,7 +80,7 @@ export function MainUploadSection() {
 
     try {
       const processedZip = await processImages(files, {
-        templates: selectedTemplates,
+        templates: useCustomSize ? [] : selectedTemplates,
         customSize: useCustomSize ? { width: customWidth, height: customHeight } : undefined,
         preserveAspectRatio: true,
         watermarkFn: watermarkRef.current?.applyWatermark
@@ -156,7 +159,7 @@ export function MainUploadSection() {
             <div className="flex justify-center">
               <Button
                 onClick={handleProcessImages}
-                disabled={isProcessing}
+                disabled={isProcessing || !canProcess}
                 className="w-full md:w-auto"
               >
                 <Download className="mr-2 h-4 w-4" />
