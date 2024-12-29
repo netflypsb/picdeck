@@ -24,6 +24,8 @@ export function MainUploadSection({ onProcessStart, onProcessComplete }: MainUpl
   const [customHeight, setCustomHeight] = useState(1080);
   const { toast } = useToast();
   const MAX_FILES = 50;
+  const [outputFormat, setOutputFormat] = useState<'png' | 'jpeg' | 'webp'>('png');
+  const [isLossless, setIsLossless] = useState(false);
 
   const handleFilesSelected = (newFiles: File[]) => {
     if (files && files.length + newFiles.length > MAX_FILES) {
@@ -85,14 +87,17 @@ export function MainUploadSection({ onProcessStart, onProcessComplete }: MainUpl
       const processedZip = await processImages(files, {
         templates: useCustomSize ? [] : selectedTemplates,
         customSize: useCustomSize ? { width: customWidth, height: customHeight } : undefined,
-        preserveAspectRatio: true,
-        watermarkSettings
+        watermarkSettings,
+        outputSettings: {
+          format: outputFormat,
+          isLossless,
+        }
       });
 
       const url = URL.createObjectURL(processedZip);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'processed_images.zip';
+      link.download = `processed_images.${outputFormat}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
