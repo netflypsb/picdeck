@@ -1,6 +1,6 @@
 import { useState, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { WatermarkTypeSelector } from './watermark/WatermarkTypeSelector';
 import { WatermarkPlacement } from './watermark/WatermarkPlacement';
 import { WatermarkAdjustments } from './watermark/WatermarkAdjustments';
@@ -46,7 +46,7 @@ export const WatermarkSection = forwardRef<WatermarkSectionRef>((_, ref) => {
     if (watermarkType === 'image' && !imageFile) return null;
     if (watermarkType === 'text' && !text) return null;
 
-    return {
+    const settings = {
       type: watermarkType,
       imageFile: watermarkType === 'image' ? imageFile : undefined,
       text: watermarkType === 'text' ? text : undefined,
@@ -58,6 +58,9 @@ export const WatermarkSection = forwardRef<WatermarkSectionRef>((_, ref) => {
       tiling,
       spacing
     };
+
+    console.log('Returning watermark settings:', settings);
+    return settings;
   }, [watermarkType, imageFile, text, font, color, transparency, scale, placement, tiling, spacing]);
 
   useImperativeHandle(ref, () => ({

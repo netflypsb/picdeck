@@ -19,6 +19,9 @@ function calculatePosition(
       x = canvas.width - watermarkWidth - 10;
       y = canvas.height - watermarkHeight - 10;
       break;
+    default:
+      x = (canvas.width - watermarkWidth) / 2;
+      y = (canvas.height - watermarkHeight) / 2;
   }
   
   return { x, y };
@@ -45,7 +48,11 @@ export async function applyWatermark(
   canvas: HTMLCanvasElement,
   settings: any
 ): Promise<void> {
-  if (!settings) return;
+  if (!settings) {
+    console.log('No watermark settings provided');
+    return;
+  }
+
   console.log('Applying watermark with settings:', settings);
 
   ctx.save();
@@ -53,24 +60,28 @@ export async function applyWatermark(
 
   if (settings.type === 'image' && settings.imageFile) {
     console.log('Applying image watermark');
-    const watermarkImg = await createImageBitmap(settings.imageFile);
-    const scaledWidth = canvas.width * (settings.scale / 100);
-    const scaledHeight = (watermarkImg.height / watermarkImg.width) * scaledWidth;
+    try {
+      const watermarkImg = await createImageBitmap(settings.imageFile);
+      const scaledWidth = canvas.width * (settings.scale / 100);
+      const scaledHeight = (watermarkImg.height / watermarkImg.width) * scaledWidth;
 
-    if (settings.tiling) {
-      const positions = generateTilingPositions(
-        canvas.width,
-        canvas.height,
-        scaledWidth,
-        scaledHeight,
-        settings.spacing
-      );
-      positions.forEach(({ x, y }) => {
+      if (settings.tiling) {
+        const positions = generateTilingPositions(
+          canvas.width,
+          canvas.height,
+          scaledWidth,
+          scaledHeight,
+          settings.spacing
+        );
+        positions.forEach(({ x, y }) => {
+          ctx.drawImage(watermarkImg, x, y, scaledWidth, scaledHeight);
+        });
+      } else {
+        const { x, y } = calculatePosition(canvas, scaledWidth, scaledHeight, settings.placement);
         ctx.drawImage(watermarkImg, x, y, scaledWidth, scaledHeight);
-      });
-    } else {
-      const { x, y } = calculatePosition(canvas, scaledWidth, scaledHeight, settings.placement);
-      ctx.drawImage(watermarkImg, x, y, scaledWidth, scaledHeight);
+      }
+    } catch (error) {
+      console.error('Error applying image watermark:', error);
     }
   } else if (settings.type === 'text' && settings.text) {
     console.log('Applying text watermark');

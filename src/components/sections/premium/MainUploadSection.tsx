@@ -8,6 +8,7 @@ import { UploadZone } from '@/components/UploadZone';
 import { UploadHeader } from './upload/UploadHeader';
 import { ProcessingButton } from './upload/ProcessingButton';
 import { UploadedImages } from './upload/UploadedImages';
+import { WatermarkSection } from './WatermarkSection';
 
 export function MainUploadSection() {
   const [files, setFiles] = useState<File[]>([]);
@@ -76,7 +77,7 @@ export function MainUploadSection() {
 
     try {
       const watermarkSettings = watermarkRef.current?.getWatermarkSettings();
-      console.log('Watermark settings:', watermarkSettings);
+      console.log('Processing with watermark settings:', watermarkSettings);
       
       const processedZip = await processImages(files, {
         templates: useCustomSize ? [] : selectedTemplates,
@@ -117,6 +118,8 @@ export function MainUploadSection() {
     <Card className="bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <UploadHeader />
       <CardContent className="space-y-4">
+        <WatermarkSection ref={watermarkRef} />
+        
         <TemplateSelector
           selectedTemplates={selectedTemplates}
           onTemplateToggle={handleTemplateToggle}
