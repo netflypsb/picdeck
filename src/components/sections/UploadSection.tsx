@@ -45,8 +45,8 @@ export function UploadSection() {
 
     try {
       const zipBlob = await processImages(files, {
-        template: SOCIAL_TEMPLATES.INSTAGRAM_POST,
-        outputFormat: 'jpeg',
+        templates: [SOCIAL_TEMPLATES.INSTAGRAM_POST],
+        outputFormat: 'png',
         preserveAspectRatio: true
       });
       

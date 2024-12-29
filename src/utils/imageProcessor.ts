@@ -1,6 +1,6 @@
 import JSZip from 'jszip';
 
-export const TEMPLATES = {
+export const SOCIAL_TEMPLATES = {
   ALL: { name: 'All Templates', width: 0, height: 0 },
   FACEBOOK_CAROUSEL: { name: 'Facebook Carousel Ad', width: 1080, height: 1080 },
   FACEBOOK_COVER: { name: 'Facebook Cover', width: 820, height: 312 },
@@ -34,12 +34,13 @@ export const TEMPLATES = {
   YOUTUBE_SHORTS: { name: 'YouTube Shorts Thumbnail', width: 1080, height: 1920 }
 } as const;
 
-export type Template = typeof TEMPLATES[keyof typeof TEMPLATES];
+export type Template = typeof SOCIAL_TEMPLATES[keyof typeof SOCIAL_TEMPLATES];
 
 interface ProcessingOptions {
   templates: Template[];
   customSize?: { width: number; height: number };
   preserveAspectRatio?: boolean;
+  outputFormat?: string;
 }
 
 export async function processImage(file: File, template: Template): Promise<Blob> {
@@ -82,7 +83,7 @@ export async function processImages(files: File[], options: ProcessingOptions): 
   
   for (const file of files) {
     const templates = options.templates.length === 0 ? 
-      Object.values(TEMPLATES).filter(t => t.name !== 'All Templates') : 
+      Object.values(SOCIAL_TEMPLATES).filter(t => t.name !== 'All Templates') : 
       options.templates;
 
     for (const template of templates) {
@@ -102,7 +103,8 @@ export async function processImages(files: File[], options: ProcessingOptions): 
         name: 'Custom Size',
         width: options.customSize.width,
         height: options.customSize.height
-      };
+      } as Template;
+      
       const processedImage = await processImage(file, customTemplate);
       const fileName = file.name.split('.')[0];
       const dimensions = `${customTemplate.width}x${customTemplate.height}`;
