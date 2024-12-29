@@ -54,9 +54,6 @@ export function MainUploadSection() {
     });
   };
 
-  // Check if processing should be allowed
-  const canProcess = files.length > 0 && (selectedTemplates.length > 0 || useCustomSize);
-
   const handleProcessImages = async () => {
     if (!files?.length) {
       toast({
@@ -81,6 +78,8 @@ export function MainUploadSection() {
 
     try {
       const watermarkSettings = watermarkRef.current?.getWatermarkSettings();
+      console.log('Watermark settings:', watermarkSettings);
+      
       const processedZip = await processImages(files, {
         templates: useCustomSize ? [] : selectedTemplates,
         customSize: useCustomSize ? { width: customWidth, height: customHeight } : undefined,
@@ -102,6 +101,7 @@ export function MainUploadSection() {
         description: "Images processed and downloaded successfully."
       });
     } catch (error) {
+      console.error('Processing error:', error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "An error occurred while processing images.",
@@ -112,6 +112,8 @@ export function MainUploadSection() {
       setProgress(0);
     }
   };
+
+  const canProcess = files?.length > 0 && (selectedTemplates.length > 0 || useCustomSize);
 
   return (
     <Card className="bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/60">
