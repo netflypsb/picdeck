@@ -27,6 +27,13 @@ export function WatermarkTypeSelector({
   font,
   color,
 }: WatermarkTypeSelectorProps) {
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] || null;
+    onImageChange(file);
+    // Reset the input value to allow selecting the same file again
+    event.target.value = '';
+  };
+
   return (
     <Tabs value={type} onValueChange={(value) => onTypeChange(value as 'image' | 'text')} className="w-full">
       <TabsList className="grid w-full grid-cols-2">
@@ -38,7 +45,7 @@ export function WatermarkTypeSelector({
         <div className="border-2 border-dashed rounded-lg p-8 text-center hover:border-primary transition-colors cursor-pointer">
           <input
             type="file"
-            onChange={(e) => onImageChange(e.target.files?.[0] || null)}
+            onChange={handleFileChange}
             accept="image/*"
             className="hidden"
             id="watermark-upload"
@@ -50,7 +57,7 @@ export function WatermarkTypeSelector({
               or click to select file
             </p>
             <p className="text-xs text-muted-foreground mt-2">
-              Supports: PNG, JPG (transparent PNG recommended)
+              Supports: PNG with transparency (recommended)
             </p>
           </label>
         </div>

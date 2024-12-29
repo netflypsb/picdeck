@@ -5,6 +5,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { WatermarkTypeSelector } from './watermark/WatermarkTypeSelector';
 import { WatermarkPlacement } from './watermark/WatermarkPlacement';
 import { WatermarkAdjustments } from './watermark/WatermarkAdjustments';
+import { ImagePreview } from '@/components/ImagePreview';
 
 interface WatermarkSectionRef {
   applyWatermark: (file: File) => Promise<Blob>;
@@ -43,14 +44,15 @@ export const WatermarkSection = forwardRef<WatermarkSectionRef>((_, ref) => {
 
   const applyWatermark = useCallback(async (originalImage: File): Promise<Blob> => {
     return new Promise((resolve, reject) => {
+      const img = document.createElement('img');
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
+      
       if (!ctx) {
         reject(new Error('Could not get canvas context'));
         return;
       }
 
-      const img = document.createElement('img');
       img.onload = () => {
         canvas.width = img.width;
         canvas.height = img.height;
@@ -131,12 +133,17 @@ export const WatermarkSection = forwardRef<WatermarkSectionRef>((_, ref) => {
               else reject(new Error('Failed to create image blob'));
             }, 'image/png');
           } else {
-            resolve(new Blob());
+            // If no watermark is set, return the original image
+            canvas.toBlob((blob) => {
+              if (blob) resolve(blob);
+              else reject(new Error('Failed to create image blob'));
+            }, 'image/png');
           }
         };
 
         applyWatermarkToCanvas();
       };
+
       img.src = URL.createObjectURL(originalImage);
     });
   }, [watermarkType, imageFile, text, font, color, transparency, scale, placement, tiling, spacing]);
@@ -165,6 +172,18 @@ export const WatermarkSection = forwardRef<WatermarkSectionRef>((_, ref) => {
           font={font}
           color={color}
         />
+
+        {watermarkType === 'image' && imageFile && (
+          <div className="mt-4">
+            <h4 className="text-sm font-medium mb-2">Watermark Preview</h4>
+            <div className="w-32">
+              <ImagePreview
+                file={imageFile}
+                onRemove={() => setImageFile(null)}
+              />
+            </div>
+          </div>
+        )}
 
         <WatermarkPlacement
           value={placement}

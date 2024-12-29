@@ -9,7 +9,6 @@ import { Progress } from '@/components/ui/progress';
 import { Template, processImages } from '@/utils/imageProcessor';
 import { TemplateSelector } from './TemplateSelector';
 import { CustomSizeInput } from './CustomSizeInput';
-import { WatermarkSection } from './WatermarkSection';
 
 export function MainUploadSection() {
   const [files, setFiles] = useState<File[]>([]);
