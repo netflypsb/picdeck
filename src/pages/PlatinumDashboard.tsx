@@ -81,6 +81,8 @@ export default function PlatinumDashboard() {
         <div className="space-y-8">
           <MainUploadSection 
             onProcessStart={handleProcessStart}
+            outputFormat={outputFormat}
+            isLossless={isLossless}
           />
           <OutputSection 
             onFormatChange={setOutputFormat}
