@@ -1,82 +1,64 @@
 import JSZip from 'jszip';
-import sharp from 'sharp';
-import { Template, ProcessingOptions } from './types';
+import { FREE_TEMPLATES, type Template } from './templates';
 import { applyWatermark } from './watermarkProcessor';
 
-export async function processImage(
-  file: File,
-  template: Template,
-  options: ProcessingOptions
-): Promise<Blob> {
+export async function processImage(file: File, template: Template): Promise<Blob> {
   return new Promise((resolve) => {
     const img = new Image();
-    img.onload = async () => {
+    img.onload = () => {
       const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d')!;
-      
       canvas.width = template.width;
       canvas.height = template.height;
+      const ctx = canvas.getContext('2d')!;
       
+      // Fill background with white
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Calculate scaling to maintain aspect ratio
       const scale = Math.min(
         template.width / img.width,
         template.height / img.height
       );
+      
+      // Center the image
       const x = (template.width - img.width * scale) / 2;
       const y = (template.height - img.height * scale) / 2;
       
-      ctx.fillStyle = 'white';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Draw resized image
       ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
-
-      if (options.watermarkSettings) {
-        await applyWatermark(ctx, canvas, options.watermarkSettings);
-      }
-
-      // Convert canvas to buffer for sharp processing
-      const imageBuffer = await new Promise<Buffer>((resolve) => {
-        canvas.toBlob(async (blob) => {
-          const arrayBuffer = await blob!.arrayBuffer();
-          resolve(Buffer.from(arrayBuffer));
-        }, 'image/png');
-      });
-
-      // Always use PNG with lossless quality
-      const processedBuffer = await sharp(imageBuffer)
-        .png({
-          quality: 100,
-          compressionLevel: 0
-        })
-        .toBuffer();
-
-      resolve(new Blob([processedBuffer], { type: 'image/png' }));
+      
+      // Add watermark
+      applyWatermark(ctx, template.width, template.height);
+      
+      canvas.toBlob((blob) => {
+        resolve(blob!);
+      }, 'image/jpeg', 0.9);
     };
     img.src = URL.createObjectURL(file);
   });
 }
 
-export async function processImages(files: File[], options: ProcessingOptions): Promise<Blob> {
+export async function processImages(files: File[]): Promise<Blob> {
+  if (files.length > 5) {
+    throw new Error('Maximum of 5 images allowed per batch.');
+  }
+
   const zip = new JSZip();
   
   for (const file of files) {
-    const templates = options.customSize 
-      ? [{ name: 'Custom Size', width: options.customSize.width, height: options.customSize.height }]
-      : options.templates;
-
-    for (const template of templates) {
-      if (template.name === 'All Templates') continue;
-      
-      const processedImage = await processImage(file, template, options);
-      const fileName = file.name.split('.')[0];
-      const templateName = template.name.toLowerCase().replace(/\s+/g, '');
-      const dimensions = `${template.width}x${template.height}`;
-      const outputName = `${fileName}.${templateName}.${dimensions}.png`;
-      
-      zip.file(outputName, processedImage);
+    for (const template of FREE_TEMPLATES) {
+      const processedImage = await processImage(file, template);
+      const fileName = file.name.replace(
+        /(\.[\w\d_-]+)$/i,
+        `_${template.name.replace(/\s+/g, '')}_${template.width}x${template.height}$1`
+      );
+      zip.file(fileName, processedImage);
     }
   }
 
   return await zip.generateAsync({ type: 'blob' });
 }
 
-export * from './types';
-export * from './templates';
+// Export templates for convenience
+export { FREE_TEMPLATES };
