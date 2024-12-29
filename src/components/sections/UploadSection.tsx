@@ -4,7 +4,7 @@ import { ImagePreview } from '@/components/ImagePreview';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { Download } from 'lucide-react';
-import { TEMPLATES, processImages } from '@/utils/imageProcessor';
+import { SOCIAL_TEMPLATES, processImages } from '@/utils/imageProcessor';
 
 export function UploadSection() {
   const [files, setFiles] = useState<File[]>([]);
@@ -44,7 +44,12 @@ export function UploadSection() {
     setIsProcessing(true);
 
     try {
-      const zipBlob = await processImages(files);
+      const zipBlob = await processImages(files, {
+        template: SOCIAL_TEMPLATES.INSTAGRAM_POST,
+        outputFormat: 'jpeg',
+        preserveAspectRatio: true
+      });
+      
       const link = document.createElement('a');
       link.href = URL.createObjectURL(zipBlob);
       link.download = 'resized_images.zip';
