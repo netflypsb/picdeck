@@ -13,9 +13,20 @@ export default function Auth() {
 
   useEffect(() => {
     const checkInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        handleAuthenticatedUser(session);
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error checking session:', error);
+          return;
+        }
+        
+        if (session?.user) {
+          console.log('Initial session found:', session.user.id);
+          handleAuthenticatedUser(session);
+        }
+      } catch (error) {
+        console.error('Error in checkInitialSession:', error);
       }
     };
     
@@ -26,11 +37,14 @@ export default function Auth() {
         console.log('Auth state changed:', event);
         
         if (event === 'SIGNED_IN' && session) {
+          console.log('User signed in:', session.user.id);
           handleAuthenticatedUser(session);
         } else if (event === 'SIGNED_OUT') {
+          console.log('User signed out');
           navigate('/');
+        } else if (event === 'TOKEN_REFRESHED' && session) {
+          console.log('Token refreshed for user:', session.user.id);
         } else if (event === 'USER_UPDATED' && !session) {
-          // Handle user deletion case when session is null after user update
           toast({
             title: "Account Deleted",
             description: "Your account has been successfully deleted.",
