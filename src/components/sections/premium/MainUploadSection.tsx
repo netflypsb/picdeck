@@ -6,10 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Download, Upload } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Progress } from '@/components/ui/progress';
-import { SOCIAL_TEMPLATES, Template, processImages } from '@/utils/imageProcessor';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Template, processImages } from '@/utils/imageProcessor';
+import { TemplateSelector } from './TemplateSelector';
+import { CustomSizeInput } from './CustomSizeInput';
 
 export function MainUploadSection() {
   const [files, setFiles] = useState<File[]>([]);
@@ -43,24 +42,12 @@ export function MainUploadSection() {
   };
 
   const handleTemplateToggle = (template: Template) => {
-    if (template.name === 'All Templates') {
-      if (selectedTemplates.some(t => t.name === 'All Templates')) {
-        setSelectedTemplates([]);
-      } else {
-        setSelectedTemplates([template]);
-      }
-      return;
-    }
-
     setSelectedTemplates(prev => {
-      // Remove 'All Templates' if it was selected
-      const filtered = prev.filter(t => t.name !== 'All Templates');
-      
-      const exists = filtered.some(t => t.name === template.name);
+      const exists = prev.some(t => t.name === template.name);
       if (exists) {
-        return filtered.filter(t => t.name !== template.name);
+        return prev.filter(t => t.name !== template.name);
       } else {
-        return [...filtered, template];
+        return [...prev, template];
       }
     });
   };
@@ -129,67 +116,19 @@ export function MainUploadSection() {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-4">
-          <div className="space-y-2">
-            <Label>Templates</Label>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-60 overflow-y-auto p-2 border rounded-md">
-              {Object.values(SOCIAL_TEMPLATES).map((template) => (
-                <div key={template.name} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={template.name}
-                    checked={selectedTemplates.some(t => t.name === template.name)}
-                    onCheckedChange={() => handleTemplateToggle(template)}
-                  />
-                  <label
-                    htmlFor={template.name}
-                    className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    {template.name}
-                    {template.name !== 'All Templates' && (
-                      <span className="text-xs text-muted-foreground ml-1">
-                        ({template.width}x{template.height})
-                      </span>
-                    )}
-                  </label>
-                </div>
-              ))}
-            </div>
-          </div>
+          <TemplateSelector
+            selectedTemplates={selectedTemplates}
+            onTemplateToggle={handleTemplateToggle}
+          />
 
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="custom-size"
-                checked={useCustomSize}
-                onCheckedChange={(checked) => setUseCustomSize(checked === true)}
-              />
-              <Label htmlFor="custom-size">Custom Size</Label>
-            </div>
-
-            {useCustomSize && (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="width">Width (px)</Label>
-                  <Input
-                    id="width"
-                    type="number"
-                    value={customWidth}
-                    onChange={(e) => setCustomWidth(Number(e.target.value))}
-                    min={1}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="height">Height (px)</Label>
-                  <Input
-                    id="height"
-                    type="number"
-                    value={customHeight}
-                    onChange={(e) => setCustomHeight(Number(e.target.value))}
-                    min={1}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
+          <CustomSizeInput
+            useCustomSize={useCustomSize}
+            customWidth={customWidth}
+            customHeight={customHeight}
+            onCustomSizeChange={setUseCustomSize}
+            onWidthChange={setCustomWidth}
+            onHeightChange={setCustomHeight}
+          />
         </div>
 
         <UploadZone 
