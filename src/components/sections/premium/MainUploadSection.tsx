@@ -1,15 +1,13 @@
 import { useState, useRef } from 'react';
-import { UploadZone } from '@/components/UploadZone';
-import { ImagePreview } from '@/components/ImagePreview';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Upload, Download } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Progress } from '@/components/ui/progress';
 import { Template, processImages } from '@/utils/imageProcessor';
 import { TemplateSelector } from './TemplateSelector';
 import { CustomSizeInput } from './CustomSizeInput';
-import { WatermarkSection } from './WatermarkSection';
+import { UploadZone } from '@/components/UploadZone';
+import { UploadHeader } from './upload/UploadHeader';
+import { ProcessingButton } from './upload/ProcessingButton';
+import { UploadedImages } from './upload/UploadedImages';
 
 export function MainUploadSection() {
   const [files, setFiles] = useState<File[]>([]);
@@ -117,12 +115,7 @@ export function MainUploadSection() {
 
   return (
     <Card className="bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Upload className="h-5 w-5 text-primary" />
-          Upload Images
-        </CardTitle>
-      </CardHeader>
+      <UploadHeader />
       <CardContent className="space-y-4">
         <TemplateSelector
           selectedTemplates={selectedTemplates}
@@ -144,33 +137,19 @@ export function MainUploadSection() {
           className="border-primary/20"
         />
         
+        <UploadedImages
+          files={files}
+          onRemove={removeFile}
+          isProcessing={isProcessing}
+          progress={progress}
+        />
+
         {files && files.length > 0 && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {files.map((file, index) => (
-                <ImagePreview
-                  key={index}
-                  file={file}
-                  onRemove={() => removeFile(index)}
-                />
-              ))}
-            </div>
-
-            {isProcessing && (
-              <Progress value={progress} className="w-full" />
-            )}
-
-            <div className="flex justify-center">
-              <Button
-                onClick={handleProcessImages}
-                disabled={isProcessing || !canProcess}
-                className="w-full md:w-auto"
-              >
-                <Download className="mr-2 h-4 w-4" />
-                {isProcessing ? 'Processing...' : 'Process & Download'}
-              </Button>
-            </div>
-          </div>
+          <ProcessingButton
+            isProcessing={isProcessing}
+            canProcess={canProcess}
+            onClick={handleProcessImages}
+          />
         )}
       </CardContent>
     </Card>

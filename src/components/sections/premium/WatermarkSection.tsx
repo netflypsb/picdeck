@@ -1,11 +1,11 @@
 import { useState, useCallback, forwardRef, useImperativeHandle } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Image } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import { WatermarkTypeSelector } from './watermark/WatermarkTypeSelector';
 import { WatermarkPlacement } from './watermark/WatermarkPlacement';
 import { WatermarkAdjustments } from './watermark/WatermarkAdjustments';
-import { ImagePreview } from '@/components/ImagePreview';
+import { WatermarkHeader } from './watermark/WatermarkHeader';
+import { WatermarkImagePreview } from './watermark/WatermarkImagePreview';
 
 interface WatermarkSectionRef {
   getWatermarkSettings: () => any;
@@ -66,12 +66,7 @@ export const WatermarkSection = forwardRef<WatermarkSectionRef>((_, ref) => {
 
   return (
     <Card className="bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Image className="h-5 w-5 text-primary" />
-          Watermark Settings
-        </CardTitle>
-      </CardHeader>
+      <WatermarkHeader />
       <CardContent className="space-y-6">
         <WatermarkTypeSelector
           type={watermarkType}
@@ -86,15 +81,10 @@ export const WatermarkSection = forwardRef<WatermarkSectionRef>((_, ref) => {
         />
 
         {watermarkType === 'image' && imageFile && (
-          <div className="mt-4">
-            <h4 className="text-sm font-medium mb-2">Watermark Preview</h4>
-            <div className="w-32">
-              <ImagePreview
-                file={imageFile}
-                onRemove={() => setImageFile(null)}
-              />
-            </div>
-          </div>
+          <WatermarkImagePreview
+            imageFile={imageFile}
+            onRemove={() => setImageFile(null)}
+          />
         )}
 
         <WatermarkPlacement
