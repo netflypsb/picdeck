@@ -5,52 +5,80 @@ import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { supabase } from '@/integrations/supabase/client';
 import { Header } from '@/components/Header';
 import { AlphaTestingBanner } from '@/components/AlphaTestingBanner';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Auth() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    const checkInitialSession = async () => {
+    // First, check and clear any potentially corrupted session
+    const checkAndCleanSession = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
-        if (error) {
-          console.error('Error checking session:', error);
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+          // If there's a session error, sign out to clear any corrupted state
+          await supabase.auth.signOut();
           return;
         }
         
         if (session?.user) {
-          console.log('Initial session found:', session.user.id);
+          console.log('Valid session found:', session.user.id);
           handleAuthenticatedUser(session);
         }
       } catch (error) {
-        console.error('Error in checkInitialSession:', error);
+        console.error('Error in checkAndCleanSession:', error);
+        // If there's an error, attempt to sign out and clear the session
+        await supabase.auth.signOut();
       }
     };
     
-    checkInitialSession();
+    checkAndCleanSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event);
         
-        if (event === 'SIGNED_IN' && session) {
-          console.log('User signed in:', session.user.id);
-          handleAuthenticatedUser(session);
-        } else if (event === 'SIGNED_OUT') {
-          console.log('User signed out');
-          navigate('/');
-        } else if (event === 'TOKEN_REFRESHED' && session) {
-          console.log('Token refreshed for user:', session.user.id);
-        } else if (event === 'USER_UPDATED' && !session) {
-          toast({
-            title: "Account Deleted",
-            description: "Your account has been successfully deleted.",
-            variant: "destructive"
-          });
-          navigate('/');
+        switch (event) {
+          case 'SIGNED_IN':
+            if (session) {
+              console.log('User signed in:', session.user.id);
+              handleAuthenticatedUser(session);
+            }
+            break;
+          
+          case 'SIGNED_OUT':
+            console.log('User signed out');
+            navigate('/');
+            break;
+          
+          case 'TOKEN_REFRESHED':
+            if (session) {
+              console.log('Token refreshed for user:', session.user.id);
+            }
+            break;
+          
+          case 'USER_UPDATED':
+            if (!session) {
+              toast({
+                title: "Account Deleted",
+                description: "Your account has been successfully deleted.",
+                variant: "destructive"
+              });
+              navigate('/');
+            }
+            break;
+
+          case 'USER_DELETED':
+            toast({
+              title: "Account Deleted",
+              description: "Your account has been successfully deleted.",
+              variant: "destructive"
+            });
+            navigate('/');
+            break;
         }
       }
     );
