@@ -41,29 +41,22 @@ export default function Account() {
   const handleLogout = async () => {
     try {
       // First, clear any existing local storage data
-      localStorage.removeItem('supabase.auth.token');
+      localStorage.clear(); // Clear all local storage data
       
       // Attempt to sign out
-      const { error } = await supabase.auth.signOut({
-        scope: 'local'  // Changed from 'global' to 'local'
-      });
+      const { error } = await supabase.auth.signOut();
       
       if (error) {
         console.error('Logout error:', error);
-        // Even if there's an error, we'll navigate to home since the session is cleared
-        navigate('/');
-        return;
       }
 
-      // If successful, navigate to home
+      // Always navigate to home page, even if there was an error
       navigate('/');
+      
     } catch (error) {
       console.error('Logout error:', error);
-      // Even if there's an error, navigate to home since we've cleared the local session
+      // Even if there's an error, navigate to home
       navigate('/');
-    } finally {
-      // Clear any remaining session data
-      await supabase.auth.clearSession();
     }
   };
 
