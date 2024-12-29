@@ -6,25 +6,19 @@ import { Button } from '@/components/ui/button';
 import { Download, Upload } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Progress } from '@/components/ui/progress';
-import { 
-  SOCIAL_TEMPLATES, 
-  AD_TEMPLATES, 
-  processImages,
-  Template 
-} from '@/utils/imageProcessor';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { TEMPLATES, Template, processImages } from '@/utils/imageProcessor';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 export function MainUploadSection() {
   const [files, setFiles] = useState<File[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [selectedTemplate, setSelectedTemplate] = useState<Template>(SOCIAL_TEMPLATES.INSTAGRAM_POST);
+  const [selectedTemplates, setSelectedTemplates] = useState<Template[]>([]);
+  const [useCustomSize, setUseCustomSize] = useState(false);
+  const [customWidth, setCustomWidth] = useState(1080);
+  const [customHeight, setCustomHeight] = useState(1080);
   const { toast } = useToast();
   const MAX_FILES = 50;
 
@@ -48,6 +42,29 @@ export function MainUploadSection() {
     setFiles(prev => prev?.filter((_, i) => i !== index));
   };
 
+  const handleTemplateToggle = (template: Template) => {
+    if (template.name === 'All Templates') {
+      if (selectedTemplates.some(t => t.name === 'All Templates')) {
+        setSelectedTemplates([]);
+      } else {
+        setSelectedTemplates([template]);
+      }
+      return;
+    }
+
+    setSelectedTemplates(prev => {
+      // Remove 'All Templates' if it was selected
+      const filtered = prev.filter(t => t.name !== 'All Templates');
+      
+      const exists = filtered.some(t => t.name === template.name);
+      if (exists) {
+        return filtered.filter(t => t.name !== template.name);
+      } else {
+        return [...filtered, template];
+      }
+    });
+  };
+
   const handleProcessImages = async () => {
     if (!files?.length) {
       toast({
@@ -58,22 +75,25 @@ export function MainUploadSection() {
       return;
     }
 
+    if (!selectedTemplates.length && !useCustomSize) {
+      toast({
+        title: "No templates selected",
+        description: "Please select at least one template or enable custom size.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsProcessing(true);
     setProgress(0);
 
     try {
       const processedZip = await processImages(files, {
-        template: selectedTemplate,
-        outputFormat: 'jpeg',
-        preserveAspectRatio: true,
-        watermark: {
-          text: 'Processed with PicDeck',
-          position: 'bottom-right',
-          opacity: 0.5
-        }
+        templates: selectedTemplates,
+        customSize: useCustomSize ? { width: customWidth, height: customHeight } : undefined,
+        preserveAspectRatio: true
       });
 
-      // Create download link
       const url = URL.createObjectURL(processedZip);
       const link = document.createElement('a');
       link.href = url;
@@ -110,32 +130,65 @@ export function MainUploadSection() {
       <CardContent className="space-y-4">
         <div className="grid gap-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Template</label>
-            <Select
-              value={selectedTemplate.name}
-              onValueChange={(value) => {
-                const template = Object.values({ ...SOCIAL_TEMPLATES, ...AD_TEMPLATES })
-                  .find(t => t.name === value);
-                if (template) setSelectedTemplate(template);
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a template" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="custom">Custom Size</SelectItem>
-                {Object.values(SOCIAL_TEMPLATES).map((template) => (
-                  <SelectItem key={template.name} value={template.name}>
-                    {template.name} ({template.width}x{template.height})
-                  </SelectItem>
-                ))}
-                {Object.values(AD_TEMPLATES).map((template) => (
-                  <SelectItem key={template.name} value={template.name}>
-                    {template.name} ({template.width}x{template.height})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label>Templates</Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-60 overflow-y-auto p-2 border rounded-md">
+              {Object.values(TEMPLATES).map((template) => (
+                <div key={template.name} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={template.name}
+                    checked={selectedTemplates.some(t => t.name === template.name)}
+                    onCheckedChange={() => handleTemplateToggle(template)}
+                  />
+                  <label
+                    htmlFor={template.name}
+                    className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    {template.name}
+                    {template.name !== 'All Templates' && (
+                      <span className="text-xs text-muted-foreground ml-1">
+                        ({template.width}x{template.height})
+                      </span>
+                    )}
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="custom-size"
+                checked={useCustomSize}
+                onCheckedChange={(checked) => setUseCustomSize(checked === true)}
+              />
+              <Label htmlFor="custom-size">Custom Size</Label>
+            </div>
+
+            {useCustomSize && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="width">Width (px)</Label>
+                  <Input
+                    id="width"
+                    type="number"
+                    value={customWidth}
+                    onChange={(e) => setCustomWidth(Number(e.target.value))}
+                    min={1}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="height">Height (px)</Label>
+                  <Input
+                    id="height"
+                    type="number"
+                    value={customHeight}
+                    onChange={(e) => setCustomHeight(Number(e.target.value))}
+                    min={1}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
