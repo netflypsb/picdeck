@@ -16,7 +16,7 @@ const steps = [
   },
   {
     title: "Process & Download",
-    description: "Click the process button to convert your images and download them"
+    description: "Click the process button to convert your images to high-quality PNG format"
   }
 ];
 

@@ -3,10 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Header } from '@/components/Header';
 import { MainUploadSection } from '@/components/sections/premium/MainUploadSection';
-import { OutputSection } from '@/components/sections/premium/OutputSection';
 import { WatermarkSection } from '@/components/sections/premium/WatermarkSection';
 import { Button } from '@/components/ui/button';
-import { Settings, User } from 'lucide-react';
+import { User } from 'lucide-react';
 import { useUserTier } from '@/hooks/use-user-tier';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -37,16 +36,6 @@ export default function PremiumDashboard() {
     checkAuth();
   }, [tier, isLoading, navigate, toast]);
 
-  const handleFormatChange = (format: string) => {
-    console.log('Format changed:', format);
-    // Add any additional format change handling logic here
-  };
-
-  const handleQualityChange = (isLossless: boolean) => {
-    console.log('Quality changed:', isLossless);
-    // Add any additional quality change handling logic here
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -76,10 +65,6 @@ export default function PremiumDashboard() {
 
         <div className="space-y-8">
           <MainUploadSection />
-          <OutputSection 
-            onFormatChange={handleFormatChange}
-            onQualityChange={handleQualityChange}
-          />
           <WatermarkSection />
         </div>
       </main>
