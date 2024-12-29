@@ -1,10 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Header } from '@/components/Header';
 import { AlphaTestingBanner } from '@/components/AlphaTestingBanner';
 import { MainUploadSection } from '@/components/sections/premium/MainUploadSection';
-import { OutputSection } from '@/components/sections/premium/OutputSection';
 import { WatermarkSection } from '@/components/sections/premium/WatermarkSection';
 import { HowToSection } from '@/components/sections/premium/HowToSection';
 import { Button } from '@/components/ui/button';
@@ -17,8 +16,6 @@ export default function PlatinumDashboard() {
   const { tier, isLoading } = useUserTier();
   const { toast } = useToast();
   const watermarkRef = useRef<{ getWatermarkSettings: () => any }>(null);
-  const [outputFormat, setOutputFormat] = useState('png');
-  const [isLossless, setIsLossless] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -43,11 +40,7 @@ export default function PlatinumDashboard() {
   }, [tier, isLoading, navigate, toast]);
 
   const handleProcessStart = () => {
-    return {
-      ...watermarkRef.current?.getWatermarkSettings(),
-      outputFormat,
-      isLossless
-    };
+    return watermarkRef.current?.getWatermarkSettings();
   };
 
   if (isLoading) {
@@ -79,15 +72,7 @@ export default function PlatinumDashboard() {
         </div>
 
         <div className="space-y-8">
-          <MainUploadSection 
-            onProcessStart={handleProcessStart}
-            outputFormat={outputFormat}
-            isLossless={isLossless}
-          />
-          <OutputSection 
-            onFormatChange={setOutputFormat}
-            onQualityChange={setIsLossless}
-          />
+          <MainUploadSection onProcessStart={handleProcessStart} />
           <WatermarkSection ref={watermarkRef} />
           <HowToSection />
         </div>

@@ -1,7 +1,7 @@
 import JSZip from 'jszip';
+import sharp from 'sharp';
 import { Template, ProcessingOptions } from './types';
 import { applyWatermark } from './watermarkProcessor';
-import { processImageWithOutputSettings } from './outputProcessor';
 
 export async function processImage(
   file: File,
@@ -40,14 +40,15 @@ export async function processImage(
         }, 'image/png');
       });
 
-      // Apply output settings if provided, otherwise use default PNG
-      const processedBuffer = options.outputSettings 
-        ? await processImageWithOutputSettings(imageBuffer, options.outputSettings)
-        : imageBuffer;
+      // Always use PNG with lossless quality
+      const processedBuffer = await sharp(imageBuffer)
+        .png({
+          quality: 100,
+          compressionLevel: 0
+        })
+        .toBuffer();
 
-      resolve(new Blob([processedBuffer], { 
-        type: `image/${options.outputSettings?.format || 'png'}` 
-      }));
+      resolve(new Blob([processedBuffer], { type: 'image/png' }));
     };
     img.src = URL.createObjectURL(file);
   });
@@ -68,8 +69,7 @@ export async function processImages(files: File[], options: ProcessingOptions): 
       const fileName = file.name.split('.')[0];
       const templateName = template.name.toLowerCase().replace(/\s+/g, '');
       const dimensions = `${template.width}x${template.height}`;
-      const extension = options.outputSettings?.format || 'png';
-      const outputName = `${fileName}.${templateName}.${dimensions}.${extension}`;
+      const outputName = `${fileName}.${templateName}.${dimensions}.png`;
       
       zip.file(outputName, processedImage);
     }

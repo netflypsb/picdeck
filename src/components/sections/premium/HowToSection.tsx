@@ -11,10 +11,6 @@ const steps = [
     description: "Upload up to 50 images (PNG, JPG, and WebP supported)"
   },
   {
-    title: "Set Output Settings",
-    description: "Choose your preferred output format and quality settings"
-  },
-  {
     title: "Add Watermark (Optional)",
     description: "Customize your images with text or image watermarks"
   },

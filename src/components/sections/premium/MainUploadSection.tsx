@@ -8,20 +8,15 @@ import { UploadZone } from '@/components/UploadZone';
 import { UploadHeader } from './upload/UploadHeader';
 import { ProcessingButton } from './upload/ProcessingButton';
 import { UploadedImages } from './upload/UploadedImages';
-import { OutputSettings } from '@/utils/image/types';
 
 interface MainUploadSectionProps {
   onProcessStart?: () => any;
   onProcessComplete?: () => void;
-  outputFormat?: string;
-  isLossless?: boolean;
 }
 
 export function MainUploadSection({ 
   onProcessStart, 
-  onProcessComplete,
-  outputFormat = 'png',
-  isLossless = false
+  onProcessComplete
 }: MainUploadSectionProps) {
   const [files, setFiles] = useState<File[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -94,11 +89,7 @@ export function MainUploadSection({
         templates: useCustomSize ? [] : selectedTemplates,
         customSize: useCustomSize ? { width: customWidth, height: customHeight } : undefined,
         preserveAspectRatio: true,
-        watermarkSettings,
-        outputSettings: {
-          format: outputFormat as 'png' | 'jpeg' | 'webp',
-          isLossless
-        }
+        watermarkSettings
       });
 
       const url = URL.createObjectURL(processedZip);

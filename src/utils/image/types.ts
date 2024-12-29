@@ -4,11 +4,6 @@ export type Template = {
   height: number;
 };
 
-export interface OutputSettings {
-  format: 'png' | 'jpeg' | 'webp';
-  isLossless: boolean;
-}
-
 export interface WatermarkSettings {
   type: 'image' | 'text';
   imageFile?: File;
@@ -27,5 +22,4 @@ export interface ProcessingOptions {
   customSize?: { width: number; height: number };
   preserveAspectRatio?: boolean;
   watermarkSettings?: WatermarkSettings;
-  outputSettings?: OutputSettings;
 }
