@@ -28,6 +28,7 @@ export async function processImage(
       ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
 
       if (watermarkSettings) {
+        console.log('Processing watermark for template:', template.name);
         await applyWatermark(ctx, canvas, watermarkSettings);
       }
 

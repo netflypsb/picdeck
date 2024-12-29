@@ -46,11 +46,13 @@ export async function applyWatermark(
   settings: any
 ): Promise<void> {
   if (!settings) return;
+  console.log('Applying watermark with settings:', settings);
 
   ctx.save();
   ctx.globalAlpha = settings.transparency / 100;
 
   if (settings.type === 'image' && settings.imageFile) {
+    console.log('Applying image watermark');
     const watermarkImg = await createImageBitmap(settings.imageFile);
     const scaledWidth = canvas.width * (settings.scale / 100);
     const scaledHeight = (watermarkImg.height / watermarkImg.width) * scaledWidth;
@@ -71,6 +73,7 @@ export async function applyWatermark(
       ctx.drawImage(watermarkImg, x, y, scaledWidth, scaledHeight);
     }
   } else if (settings.type === 'text' && settings.text) {
+    console.log('Applying text watermark');
     const fontSize = Math.floor(canvas.width * (settings.scale / 100));
     ctx.font = `${fontSize}px ${settings.font || 'Arial'}`;
     ctx.fillStyle = settings.color || '#000000';

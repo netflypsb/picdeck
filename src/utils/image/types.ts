@@ -1,8 +1,8 @@
-export interface Template {
+export type Template = {
   name: string;
   width: number;
   height: number;
-}
+};
 
 export interface WatermarkSettings {
   type: 'image' | 'text';
