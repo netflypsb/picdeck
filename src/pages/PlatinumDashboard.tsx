@@ -76,11 +76,8 @@ export default function PlatinumDashboard() {
         <div className="space-y-8">
           <MainUploadSection />
           <OutputSection />
-          {/* Relocated WatermarkSection from MainUploadSection */}
-          <div className="watermark-section-wrapper">
-            {/* Place the working WatermarkSection logic here */}
-            {/* Assuming the functionality from MainUploadSection can be isolated and reused */}
-          </div>
+          {/* Relocate the WatermarkSection from MainUploadSection */}
+          <WatermarkSection />
         </div>
       </main>
 
