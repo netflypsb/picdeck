@@ -9,7 +9,7 @@ import { PasswordCard } from '@/components/account/PasswordCard';
 import { SupportCard } from '@/components/account/SupportCard';
 import { LogOut, ArrowLeft } from 'lucide-react';
 import { useUserTier } from '@/hooks/use-user-tier';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,10 +40,6 @@ export default function Account() {
 
   const handleLogout = async () => {
     try {
-      // First clear any existing session data
-      await supabase.auth.clearSession();
-      
-      // Then perform the actual logout
       const { error } = await supabase.auth.signOut();
       
       if (error) {
