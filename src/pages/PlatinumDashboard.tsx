@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Header } from '@/components/Header';
@@ -6,8 +6,9 @@ import { AlphaTestingBanner } from '@/components/AlphaTestingBanner';
 import { MainUploadSection } from '@/components/sections/premium/MainUploadSection';
 import { OutputSection } from '@/components/sections/premium/OutputSection';
 import { WatermarkSection } from '@/components/sections/premium/WatermarkSection';
+import { HowToSection } from '@/components/sections/premium/HowToSection';
 import { Button } from '@/components/ui/button';
-import { Settings, User } from 'lucide-react';
+import { User } from 'lucide-react';
 import { useUserTier } from '@/hooks/use-user-tier';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -16,6 +17,8 @@ export default function PlatinumDashboard() {
   const { tier, isLoading } = useUserTier();
   const { toast } = useToast();
   const watermarkRef = useRef<{ getWatermarkSettings: () => any }>(null);
+  const [outputFormat, setOutputFormat] = useState('png');
+  const [isLossless, setIsLossless] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -40,7 +43,11 @@ export default function PlatinumDashboard() {
   }, [tier, isLoading, navigate, toast]);
 
   const handleProcessStart = () => {
-    return watermarkRef.current?.getWatermarkSettings();
+    return {
+      ...watermarkRef.current?.getWatermarkSettings(),
+      outputFormat,
+      isLossless
+    };
   };
 
   if (isLoading) {
@@ -68,14 +75,6 @@ export default function PlatinumDashboard() {
               <User className="h-4 w-4" />
               Account
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => navigate('/settings')}
-              className="flex items-center gap-2"
-            >
-              <Settings className="h-4 w-4" />
-              Settings
-            </Button>
           </div>
         </div>
 
@@ -83,8 +82,12 @@ export default function PlatinumDashboard() {
           <MainUploadSection 
             onProcessStart={handleProcessStart}
           />
-          <OutputSection />
+          <OutputSection 
+            onFormatChange={setOutputFormat}
+            onQualityChange={setIsLossless}
+          />
           <WatermarkSection ref={watermarkRef} />
+          <HowToSection />
         </div>
       </main>
 
