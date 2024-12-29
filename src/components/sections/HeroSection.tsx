@@ -1,4 +1,4 @@
-import { ArrowRight } from 'lucide-react';
+import { ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export function HeroSection() {
@@ -16,7 +16,7 @@ export function HeroSection() {
         Your Ultimate Image Resizing Tool – Resize your pictures effortlessly for all your favorite platforms in seconds.
       </p>
       <Button onClick={scrollToUpload} size="lg" className="animate-float">
-        Sign Up for a FREE Account <ArrowRight className="ml-2" />
+        Try It Now <ArrowDown className="ml-2" />
       </Button>
     </section>
   );
