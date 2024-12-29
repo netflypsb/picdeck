@@ -59,6 +59,3 @@ export async function processImages(files: File[]): Promise<Blob> {
 
   return await zip.generateAsync({ type: 'blob' });
 }
-
-// Export templates for convenience
-export { FREE_TEMPLATES };

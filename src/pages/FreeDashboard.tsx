@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { UploadZone } from '@/components/UploadZone';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Lock, Upload, Image, Download } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
+import { Lock, Upload, Image } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { UploadSection } from '@/components/sections/UploadSection';
 
 export default function FreeDashboard() {
   const navigate = useNavigate();
@@ -41,19 +41,7 @@ export default function FreeDashboard() {
       </div>
 
       <div className="mb-8">
-        <UploadZone 
-          onFilesSelected={(files) => {
-            if (files.length > 5) {
-              toast({
-                title: "Upload limit exceeded",
-                description: "Free tier allows up to 5 images per batch",
-                variant: "destructive"
-              });
-              return;
-            }
-            // Handle file upload
-          }}
-        />
+        <UploadSection />
       </div>
 
       <div className="grid md:grid-cols-3 gap-6">
