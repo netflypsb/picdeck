@@ -40,15 +40,18 @@ export default function Account() {
 
   const handleLogout = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
+      // First, clear any existing local storage data
+      localStorage.removeItem('supabase.auth.token');
+      
+      // Attempt to sign out
+      const { error } = await supabase.auth.signOut({
+        scope: 'local'  // Changed from 'global' to 'local'
+      });
       
       if (error) {
         console.error('Logout error:', error);
-        toast({
-          title: "Error",
-          description: "There was a problem logging out. Please try again.",
-          variant: "destructive",
-        });
+        // Even if there's an error, we'll navigate to home since the session is cleared
+        navigate('/');
         return;
       }
 
@@ -56,11 +59,11 @@ export default function Account() {
       navigate('/');
     } catch (error) {
       console.error('Logout error:', error);
-      toast({
-        title: "Error",
-        description: "There was a problem logging out. Please try again.",
-        variant: "destructive",
-      });
+      // Even if there's an error, navigate to home since we've cleared the local session
+      navigate('/');
+    } finally {
+      // Clear any remaining session data
+      await supabase.auth.clearSession();
     }
   };
 
