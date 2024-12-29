@@ -1,94 +1,18 @@
-import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Auth as SupabaseAuth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
+import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { Header } from '@/components/Header';
 import { AlphaTestingBanner } from '@/components/AlphaTestingBanner';
 import { useToast } from '@/hooks/use-toast';
+import { useAuthStateChange } from '@/hooks/useAuthStateChange';
 
 export default function Auth() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  useEffect(() => {
-    // First, check and clear any potentially corrupted session
-    const checkAndCleanSession = async () => {
-      try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-          console.error('Session error:', sessionError);
-          // If there's a session error, sign out to clear any corrupted state
-          await supabase.auth.signOut();
-          return;
-        }
-        
-        if (session?.user) {
-          console.log('Valid session found:', session.user.id);
-          handleAuthenticatedUser(session);
-        }
-      } catch (error) {
-        console.error('Error in checkAndCleanSession:', error);
-        // If there's an error, attempt to sign out and clear the session
-        await supabase.auth.signOut();
-      }
-    };
-    
-    checkAndCleanSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event);
-        
-        switch (event) {
-          case 'SIGNED_IN':
-            if (session) {
-              console.log('User signed in:', session.user.id);
-              handleAuthenticatedUser(session);
-            }
-            break;
-          
-          case 'SIGNED_OUT':
-            console.log('User signed out');
-            navigate('/');
-            break;
-          
-          case 'TOKEN_REFRESHED':
-            if (session) {
-              console.log('Token refreshed for user:', session.user.id);
-            }
-            break;
-          
-          case 'USER_UPDATED':
-            if (!session) {
-              toast({
-                title: "Account Deleted",
-                description: "Your account has been successfully deleted.",
-                variant: "destructive"
-              });
-              navigate('/');
-            }
-            break;
-
-          case 'USER_DELETED':
-            toast({
-              title: "Account Deleted",
-              description: "Your account has been successfully deleted.",
-              variant: "destructive"
-            });
-            navigate('/');
-            break;
-        }
-      }
-    );
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [navigate, toast]);
-
-  const handleAuthenticatedUser = async (session) => {
+  const handleAuthenticatedUser = async (session: Session) => {
     try {
       console.log('Handling authenticated user:', session.user.id);
       
@@ -137,6 +61,8 @@ export default function Auth() {
       navigate('/free-dashboard');
     }
   };
+
+  useAuthStateChange(handleAuthenticatedUser);
 
   return (
     <div className="min-h-screen flex flex-col">
