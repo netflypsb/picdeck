@@ -17,7 +17,7 @@ export default function PlatinumDashboard() {
   const { tier, isLoading } = useUserTier();
   const { toast } = useToast();
   const watermarkRef = useRef<{ getWatermarkSettings: () => any }>(null);
-  const [outputFormat, setOutputFormat] = useState<'png' | 'jpeg' | 'webp'>('png');
+  const [outputFormat, setOutputFormat] = useState('png');
   const [isLossless, setIsLossless] = useState(false);
 
   useEffect(() => {
@@ -45,19 +45,9 @@ export default function PlatinumDashboard() {
   const handleProcessStart = () => {
     return {
       ...watermarkRef.current?.getWatermarkSettings(),
-      outputSettings: {
-        format: outputFormat,
-        isLossless
-      }
+      outputFormat,
+      isLossless
     };
-  };
-
-  const handleFormatChange = (format: string) => {
-    setOutputFormat(format as 'png' | 'jpeg' | 'webp');
-  };
-
-  const handleQualityChange = (isLossless: boolean) => {
-    setIsLossless(isLossless);
   };
 
   if (isLoading) {
@@ -93,8 +83,8 @@ export default function PlatinumDashboard() {
             onProcessStart={handleProcessStart}
           />
           <OutputSection 
-            onFormatChange={handleFormatChange}
-            onQualityChange={handleQualityChange}
+            onFormatChange={setOutputFormat}
+            onQualityChange={setIsLossless}
           />
           <WatermarkSection ref={watermarkRef} />
           <HowToSection />
