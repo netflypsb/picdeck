@@ -9,6 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { Template, processImages } from '@/utils/imageProcessor';
 import { TemplateSelector } from './TemplateSelector';
 import { CustomSizeInput } from './CustomSizeInput';
+import { WatermarkSection } from './WatermarkSection';
 
 export function MainUploadSection() {
   const [files, setFiles] = useState<File[]>([]);
@@ -20,7 +21,7 @@ export function MainUploadSection() {
   const [customHeight, setCustomHeight] = useState(1080);
   const { toast } = useToast();
   const MAX_FILES = 50;
-  const watermarkRef = useRef<{ applyWatermark: (file: File) => Promise<Blob> }>(null);
+  const watermarkRef = useRef<{ getWatermarkSettings: () => any }>(null);
 
   const handleFilesSelected = (newFiles: File[]) => {
     if (files && files.length + newFiles.length > MAX_FILES) {
@@ -79,11 +80,12 @@ export function MainUploadSection() {
     setProgress(0);
 
     try {
+      const watermarkSettings = watermarkRef.current?.getWatermarkSettings();
       const processedZip = await processImages(files, {
         templates: useCustomSize ? [] : selectedTemplates,
         customSize: useCustomSize ? { width: customWidth, height: customHeight } : undefined,
         preserveAspectRatio: true,
-        watermarkFn: watermarkRef.current?.applyWatermark
+        watermarkSettings
       });
 
       const url = URL.createObjectURL(processedZip);
