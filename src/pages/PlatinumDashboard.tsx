@@ -77,7 +77,7 @@ export default function PlatinumDashboard() {
         <div className="space-y-8">
           <MainUploadSection />
           <OutputSection />
-          <WatermarkSection />
+          <WatermarkSection /> {/* Correct placement of WatermarkSection */}
         </div>
       </main>
 
