@@ -1,1 +1,10 @@
 project_id = "xyxpiinqnibqmosvndxv"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+
+[[functions]]
+name = "process-images"
+verify_jwt = false
