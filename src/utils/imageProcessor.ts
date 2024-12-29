@@ -34,7 +34,11 @@ export const SOCIAL_TEMPLATES = {
   YOUTUBE_SHORTS: { name: 'YouTube Shorts Thumbnail', width: 1080, height: 1920 }
 } as const;
 
-export type Template = typeof SOCIAL_TEMPLATES[keyof typeof SOCIAL_TEMPLATES];
+export type Template = {
+  name: string;
+  width: number;
+  height: number;
+};
 
 interface ProcessingOptions {
   templates: Template[];
@@ -99,11 +103,11 @@ export async function processImages(files: File[], options: ProcessingOptions): 
     }
 
     if (options.customSize) {
-      const customTemplate = {
+      const customTemplate: Template = {
         name: 'Custom Size',
         width: options.customSize.width,
         height: options.customSize.height
-      } as Template;
+      };
       
       const processedImage = await processImage(file, customTemplate);
       const fileName = file.name.split('.')[0];

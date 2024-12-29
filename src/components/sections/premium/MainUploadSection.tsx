@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Download, Upload } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Progress } from '@/components/ui/progress';
-import { TEMPLATES, Template, processImages } from '@/utils/imageProcessor';
+import { SOCIAL_TEMPLATES, Template, processImages } from '@/utils/imageProcessor';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -132,7 +132,7 @@ export function MainUploadSection() {
           <div className="space-y-2">
             <Label>Templates</Label>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-60 overflow-y-auto p-2 border rounded-md">
-              {Object.values(TEMPLATES).map((template) => (
+              {Object.values(SOCIAL_TEMPLATES).map((template) => (
                 <div key={template.name} className="flex items-center space-x-2">
                   <Checkbox
                     id={template.name}
