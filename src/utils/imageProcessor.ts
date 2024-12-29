@@ -45,19 +45,19 @@ interface ProcessingOptions {
   customSize?: { width: number; height: number };
   preserveAspectRatio?: boolean;
   outputFormat?: string;
+  watermarkFn?: (file: File) => Promise<Blob>;
 }
 
-export async function processImage(file: File, template: Template): Promise<Blob> {
+export async function processImage(file: File, template: Template, watermarkFn?: (file: File) => Promise<Blob>): Promise<Blob> {
   return new Promise((resolve) => {
     const img = new Image();
-    img.onload = () => {
+    img.onload = async () => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d')!;
       
       canvas.width = template.width;
       canvas.height = template.height;
       
-      // Draw image with aspect ratio preservation
       const scale = Math.min(
         template.width / img.width,
         template.height / img.height
@@ -65,18 +65,29 @@ export async function processImage(file: File, template: Template): Promise<Blob
       const x = (template.width - img.width * scale) / 2;
       const y = (template.height - img.height * scale) / 2;
       
-      // Fill background with white
       ctx.fillStyle = 'white';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
-      // Draw the image
       ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
-      
-      canvas.toBlob(
-        (blob) => resolve(blob!),
-        'image/png',
-        1.0
-      );
+
+      if (watermarkFn) {
+        const watermarkedBlob = await watermarkFn(file);
+        const watermarkedImg = new Image();
+        watermarkedImg.onload = () => {
+          ctx.drawImage(watermarkedImg, x, y, img.width * scale, img.height * scale);
+          canvas.toBlob(
+            (blob) => resolve(blob!),
+            'image/png',
+            1.0
+          );
+        };
+        watermarkedImg.src = URL.createObjectURL(watermarkedBlob);
+      } else {
+        canvas.toBlob(
+          (blob) => resolve(blob!),
+          'image/png',
+          1.0
+        );
+      }
     };
     img.src = URL.createObjectURL(file);
   });
@@ -93,7 +104,7 @@ export async function processImages(files: File[], options: ProcessingOptions): 
     for (const template of templates) {
       if (template.name === 'All Templates') continue;
       
-      const processedImage = await processImage(file, template);
+      const processedImage = await processImage(file, template, options.watermarkFn);
       const fileName = file.name.split('.')[0];
       const templateName = template.name.toLowerCase().replace(/\s+/g, '');
       const dimensions = `${template.width}x${template.height}`;
@@ -109,7 +120,7 @@ export async function processImages(files: File[], options: ProcessingOptions): 
         height: options.customSize.height
       };
       
-      const processedImage = await processImage(file, customTemplate);
+      const processedImage = await processImage(file, customTemplate, options.watermarkFn);
       const fileName = file.name.split('.')[0];
       const dimensions = `${customTemplate.width}x${customTemplate.height}`;
       const outputName = `${fileName}.custom.${dimensions}.png`;

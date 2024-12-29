@@ -2,12 +2,12 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UploadZone } from "@/components/UploadZone";
+import { Upload } from "lucide-react";
 
 interface WatermarkTypeSelectorProps {
   type: 'image' | 'text';
   onTypeChange: (type: 'image' | 'text') => void;
-  onImageChange: (files: File[]) => void;
+  onImageChange: (file: File | null) => void;
   onTextChange: (text: string) => void;
   onFontChange: (font: string) => void;
   onColorChange: (color: string) => void;
@@ -35,11 +35,25 @@ export function WatermarkTypeSelector({
       </TabsList>
 
       <TabsContent value="image" className="space-y-4">
-        <UploadZone
-          onFilesSelected={onImageChange}
-          maxFiles={1}
-          className="h-32"
-        />
+        <div className="border-2 border-dashed rounded-lg p-8 text-center hover:border-primary transition-colors cursor-pointer">
+          <input
+            type="file"
+            onChange={(e) => onImageChange(e.target.files?.[0] || null)}
+            accept="image/*"
+            className="hidden"
+            id="watermark-upload"
+          />
+          <label htmlFor="watermark-upload" className="cursor-pointer">
+            <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
+            <h3 className="mt-4 text-lg font-semibold">Drop your watermark image here</h3>
+            <p className="text-sm text-muted-foreground mt-2">
+              or click to select file
+            </p>
+            <p className="text-xs text-muted-foreground mt-2">
+              Supports: PNG, JPG (transparent PNG recommended)
+            </p>
+          </label>
+        </div>
       </TabsContent>
 
       <TabsContent value="text" className="space-y-4">

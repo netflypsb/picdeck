@@ -1,14 +1,15 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { UploadZone } from '@/components/UploadZone';
 import { ImagePreview } from '@/components/ImagePreview';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, Upload } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Progress } from '@/components/ui/progress';
 import { Template, processImages } from '@/utils/imageProcessor';
 import { TemplateSelector } from './TemplateSelector';
 import { CustomSizeInput } from './CustomSizeInput';
+import { WatermarkSection } from './WatermarkSection';
 
 export function MainUploadSection() {
   const [files, setFiles] = useState<File[]>([]);
@@ -52,6 +53,8 @@ export function MainUploadSection() {
     });
   };
 
+  const watermarkRef = useRef<{ applyWatermark: (file: File) => Promise<Blob> }>();
+
   const handleProcessImages = async () => {
     if (!files?.length) {
       toast({
@@ -78,7 +81,8 @@ export function MainUploadSection() {
       const processedZip = await processImages(files, {
         templates: selectedTemplates,
         customSize: useCustomSize ? { width: customWidth, height: customHeight } : undefined,
-        preserveAspectRatio: true
+        preserveAspectRatio: true,
+        watermarkFn: watermarkRef.current?.applyWatermark
       });
 
       const url = URL.createObjectURL(processedZip);
@@ -115,21 +119,21 @@ export function MainUploadSection() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid gap-4">
-          <TemplateSelector
-            selectedTemplates={selectedTemplates}
-            onTemplateToggle={handleTemplateToggle}
-          />
+        <TemplateSelector
+          selectedTemplates={selectedTemplates}
+          onTemplateToggle={handleTemplateToggle}
+        />
 
-          <CustomSizeInput
-            useCustomSize={useCustomSize}
-            customWidth={customWidth}
-            customHeight={customHeight}
-            onCustomSizeChange={setUseCustomSize}
-            onWidthChange={setCustomWidth}
-            onHeightChange={setCustomHeight}
-          />
-        </div>
+        <CustomSizeInput
+          useCustomSize={useCustomSize}
+          customWidth={customWidth}
+          customHeight={customHeight}
+          onCustomSizeChange={setUseCustomSize}
+          onWidthChange={setCustomWidth}
+          onHeightChange={setCustomHeight}
+        />
+
+        <WatermarkSection ref={watermarkRef} />
 
         <UploadZone 
           onFilesSelected={handleFilesSelected}
