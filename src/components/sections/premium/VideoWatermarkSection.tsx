@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Video } from 'lucide-react';
+import { Video, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { VideoProcessor } from './watermark/VideoProcessor';
+import { Button } from '@/components/ui/button';
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const MAX_RESOLUTION = 1080;
@@ -54,10 +55,10 @@ export function VideoWatermarkSection() {
       return;
     }
 
-    if (!['video/mp4', 'video/quicktime'].includes(file.type)) {
+    if (file.type !== 'video/mp4') {
       toast({
         title: "Invalid file type",
-        description: "Only .mp4 and .mov files are supported",
+        description: "Only MP4 files are supported",
         variant: "destructive"
       });
       return;
@@ -87,9 +88,33 @@ export function VideoWatermarkSection() {
     }
 
     setWatermarkImage(file);
+    setWatermarkText(''); // Clear text watermark when image is selected
     toast({
       title: "Watermark image uploaded",
       description: "Your watermark image has been selected successfully"
+    });
+  };
+
+  const handleWatermarkTextChange = (text: string) => {
+    setWatermarkText(text);
+    if (text) {
+      setWatermarkImage(null); // Clear image watermark when text is entered
+    }
+  };
+
+  const removeVideo = () => {
+    setVideo(null);
+    toast({
+      title: "Video removed",
+      description: "The video has been removed"
+    });
+  };
+
+  const removeWatermarkImage = () => {
+    setWatermarkImage(null);
+    toast({
+      title: "Watermark image removed",
+      description: "The watermark image has been removed"
     });
   };
 
@@ -103,23 +128,54 @@ export function VideoWatermarkSection() {
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="video">Upload Video (Max 50MB, MP4 or MOV)</Label>
-          <Input
-            id="video"
-            type="file"
-            accept="video/mp4,video/quicktime"
-            onChange={handleVideoUpload}
-          />
+          <Label htmlFor="video">Upload Video (Max 50MB, MP4 only)</Label>
+          <div className="relative">
+            <Input
+              id="video"
+              type="file"
+              accept="video/mp4"
+              onChange={handleVideoUpload}
+              disabled={processing}
+            />
+            {video && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-2 top-1/2 -translate-y-1/2"
+                onClick={removeVideo}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+          {video && (
+            <p className="text-sm text-muted-foreground">
+              Selected: {video.name}
+            </p>
+          )}
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="watermark-image">Watermark Image (Optional)</Label>
-          <Input
-            id="watermark-image"
-            type="file"
-            accept="image/*"
-            onChange={handleWatermarkImageUpload}
-          />
+          <div className="relative">
+            <Input
+              id="watermark-image"
+              type="file"
+              accept="image/*"
+              onChange={handleWatermarkImageUpload}
+              disabled={!!watermarkText || processing}
+            />
+            {watermarkImage && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-2 top-1/2 -translate-y-1/2"
+                onClick={removeWatermarkImage}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
 
         <div className="space-y-2">
@@ -128,8 +184,9 @@ export function VideoWatermarkSection() {
             id="watermark-text"
             type="text"
             value={watermarkText}
-            onChange={(e) => setWatermarkText(e.target.value)}
+            onChange={(e) => handleWatermarkTextChange(e.target.value)}
             placeholder="Enter watermark text"
+            disabled={!!watermarkImage || processing}
           />
         </div>
 

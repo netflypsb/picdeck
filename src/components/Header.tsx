@@ -149,14 +149,9 @@ export function Header() {
 
         <div className="flex items-center space-x-2">
           {isAuthenticated ? (
-            <>
-              <Button size="sm" onClick={() => navigate(getDashboardRoute())}>
-                Dashboard
-              </Button>
-              <Button size="sm" variant="outline" onClick={handleSignOut}>
-                Sign Out
-              </Button>
-            </>
+            <Button size="sm" onClick={() => navigate(getDashboardRoute())}>
+              Dashboard
+            </Button>
           ) : (
             <Button size="sm" onClick={() => navigate('/auth')}>
               <LogIn className="mr-2 h-4 w-4" />
