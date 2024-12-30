@@ -67,7 +67,7 @@ export default function Auth() {
   supabase.auth.onAuthStateChange((event, session) => {
     if (event === 'SIGNED_IN' && session) {
       handleAuthenticatedUser(session);
-    } else if (event === 'USER_DELETED') {
+    } else if (event === 'USER_DELETED' as any) {
       toast({
         title: "Account Deleted",
         description: "Your account has been successfully deleted.",
