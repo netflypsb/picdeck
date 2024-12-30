@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Header } from '@/components/Header';
@@ -6,16 +6,18 @@ import { AlphaTestingBanner } from '@/components/AlphaTestingBanner';
 import { MainUploadSection } from '@/components/sections/premium/MainUploadSection';
 import { WatermarkSection } from '@/components/sections/premium/WatermarkSection';
 import { HowToSection } from '@/components/sections/premium/HowToSection';
+import { VideoWatermarkSection } from '@/components/sections/premium/VideoWatermarkSection';
 import { Button } from '@/components/ui/button';
-import { User } from 'lucide-react';
+import { User, ChevronDown, ChevronUp } from 'lucide-react';
 import { useUserTier } from '@/hooks/use-user-tier';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 export default function PlatinumDashboard() {
   const navigate = useNavigate();
   const { tier, isLoading } = useUserTier();
   const { toast } = useToast();
   const watermarkRef = useRef<{ getWatermarkSettings: () => any }>(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -75,6 +77,23 @@ export default function PlatinumDashboard() {
           <MainUploadSection onProcessStart={handleProcessStart} />
           <WatermarkSection ref={watermarkRef} />
           <HowToSection />
+          
+          <Button 
+            variant="outline" 
+            className="w-full"
+            onClick={() => setShowAdvanced(!showAdvanced)}
+          >
+            More Advanced Features
+            {showAdvanced ? (
+              <ChevronUp className="ml-2 h-4 w-4" />
+            ) : (
+              <ChevronDown className="ml-2 h-4 w-4" />
+            )}
+          </Button>
+
+          {showAdvanced && (
+            <VideoWatermarkSection />
+          )}
         </div>
       </main>
 
