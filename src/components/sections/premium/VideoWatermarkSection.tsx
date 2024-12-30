@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Video, X } from 'lucide-react';
+import { Video } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { VideoProcessor } from './watermark/VideoProcessor';
-import { Button } from '@/components/ui/button';
+import { VideoUploadInput } from './watermark/VideoUploadInput';
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const MAX_RESOLUTION = 1080;
@@ -17,6 +17,7 @@ export function VideoWatermarkSection() {
   const [watermarkText, setWatermarkText] = useState('');
   const [position, setPosition] = useState('top-right');
   const [transparency, setTransparency] = useState([50]);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const validateVideo = async (file: File): Promise<boolean> => {
     return new Promise((resolve) => {
@@ -127,33 +128,12 @@ export function VideoWatermarkSection() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="space-y-2">
-          <Label htmlFor="video">Upload Video (Max 50MB, MP4 only)</Label>
-          <div className="relative">
-            <Input
-              id="video"
-              type="file"
-              accept="video/mp4"
-              onChange={handleVideoUpload}
-              disabled={processing}
-            />
-            {video && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute right-2 top-1/2 -translate-y-1/2"
-                onClick={removeVideo}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-          {video && (
-            <p className="text-sm text-muted-foreground">
-              Selected: {video.name}
-            </p>
-          )}
-        </div>
+        <VideoUploadInput
+          onVideoUpload={handleVideoUpload}
+          onVideoRemove={removeVideo}
+          video={video}
+          isProcessing={isProcessing}
+        />
 
         <div className="space-y-2">
           <Label htmlFor="watermark-image">Watermark Image (Optional)</Label>
@@ -163,7 +143,7 @@ export function VideoWatermarkSection() {
               type="file"
               accept="image/*"
               onChange={handleWatermarkImageUpload}
-              disabled={!!watermarkText || processing}
+              disabled={!!watermarkText || isProcessing}
             />
             {watermarkImage && (
               <Button
@@ -186,7 +166,7 @@ export function VideoWatermarkSection() {
             value={watermarkText}
             onChange={(e) => handleWatermarkTextChange(e.target.value)}
             placeholder="Enter watermark text"
-            disabled={!!watermarkImage || processing}
+            disabled={!!watermarkImage || isProcessing}
           />
         </div>
 
@@ -196,6 +176,8 @@ export function VideoWatermarkSection() {
           watermarkText={watermarkText}
           position={position}
           transparency={transparency}
+          isProcessing={isProcessing}
+          setIsProcessing={setIsProcessing}
         />
       </CardContent>
     </Card>

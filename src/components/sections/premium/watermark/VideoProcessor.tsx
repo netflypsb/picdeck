@@ -1,7 +1,7 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Upload, X } from 'lucide-react';
+import { Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile } from '@ffmpeg/util';
@@ -13,6 +13,8 @@ interface VideoProcessorProps {
   watermarkText: string;
   position: string;
   transparency: number[];
+  isProcessing: boolean;
+  setIsProcessing: (processing: boolean) => void;
 }
 
 export function VideoProcessor({
@@ -21,53 +23,11 @@ export function VideoProcessor({
   watermarkText,
   position,
   transparency,
+  isProcessing,
+  setIsProcessing,
 }: VideoProcessorProps) {
   const { toast } = useToast();
-  const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const workerRef = useRef<Worker | null>(null);
-
-  const validateVideo = async (file: File): Promise<boolean> => {
-    return new Promise((resolve) => {
-      const video = document.createElement('video');
-      video.preload = 'metadata';
-
-      video.onloadedmetadata = () => {
-        URL.revokeObjectURL(video.src);
-        const isValidFormat = file.type === 'video/mp4';
-        const isValidSize = file.size <= 50 * 1024 * 1024; // 50MB
-        const isValidResolution = video.videoHeight <= 1080;
-
-        if (!isValidFormat) {
-          toast({
-            title: "Unsupported format",
-            description: "Please upload an MP4 video.",
-            variant: "destructive"
-          });
-        }
-
-        if (!isValidSize) {
-          toast({
-            title: "File too large",
-            description: "Video must be under 50MB.",
-            variant: "destructive"
-          });
-        }
-
-        if (!isValidResolution) {
-          toast({
-            title: "Resolution too high",
-            description: "Video resolution must not exceed 1080p.",
-            variant: "destructive"
-          });
-        }
-
-        resolve(isValidFormat && isValidSize && isValidResolution);
-      };
-
-      video.src = URL.createObjectURL(file);
-    });
-  };
 
   const processVideo = async () => {
     if (!video) {
@@ -88,17 +48,9 @@ export function VideoProcessor({
       return;
     }
 
-    const isValid = await validateVideo(video);
-    if (!isValid) return;
-
     try {
-      setProcessing(true);
+      setIsProcessing(true);
       setProgress(0);
-
-      // Initialize Web Worker for processing
-      if (!workerRef.current) {
-        workerRef.current = new Worker(new URL('@/workers/videoProcessor.ts', import.meta.url));
-      }
 
       const ffmpeg = new FFmpeg();
       console.log('Loading FFmpeg...');
@@ -156,17 +108,14 @@ export function VideoProcessor({
         variant: "destructive"
       });
     } finally {
-      setProcessing(false);
-      if (workerRef.current) {
-        workerRef.current.terminate();
-        workerRef.current = null;
-      }
+      setIsProcessing(false);
+      setProgress(0);
     }
   };
 
   return (
     <div className="space-y-4">
-      {processing && (
+      {isProcessing && (
         <div className="space-y-2">
           <Progress value={progress} />
           <p className="text-sm text-muted-foreground">Processing video...</p>
@@ -176,9 +125,9 @@ export function VideoProcessor({
       <Button
         className="w-full"
         onClick={processVideo}
-        disabled={processing || !video || (!watermarkImage && !watermarkText)}
+        disabled={isProcessing || !video || (!watermarkImage && !watermarkText)}
       >
-        {processing ? (
+        {isProcessing ? (
           <>Processing...</>
         ) : (
           <>
