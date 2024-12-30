@@ -64,6 +64,23 @@ export default function Auth() {
 
   useAuthStateChange(handleAuthenticatedUser);
 
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_IN' && session) {
+      handleAuthenticatedUser(session);
+    } else if (event === 'USER_DELETED') {
+      toast({
+        title: "Account Deleted",
+        description: "Your account has been successfully deleted.",
+      });
+      navigate('/');
+    } else if (event === 'PASSWORD_RECOVERY') {
+      toast({
+        title: "Password Reset",
+        description: "Please check your email to reset your password.",
+      });
+    }
+  });
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />

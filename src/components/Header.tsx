@@ -1,7 +1,7 @@
 import { LogIn, Menu, X } from 'lucide-react';
 import { Button } from './ui/button';
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserTier } from '@/hooks/use-user-tier';
 import { useToast } from '@/hooks/use-toast';
@@ -11,6 +11,7 @@ export function Header() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
   const { tier } = useUserTier();
   const { toast } = useToast();
 
@@ -74,32 +75,18 @@ export function Header() {
     }
   };
 
-  const handleSignOut = async () => {
-    try {
-      await supabase.auth.signOut();
-      toast({
-        title: "Signed out successfully",
-        description: "You have been logged out of your account.",
-      });
-      navigate('/');
-    } catch (error) {
-      console.error('Error signing out:', error);
-      toast({
-        title: "Error signing out",
-        description: "There was a problem signing out. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
   const scrollToSection = (id: string) => {
-    const element = document.getElementById(id);
-    element?.scrollIntoView({ behavior: 'smooth' });
+    if (location.pathname !== '/') {
+      navigate('/', { state: { scrollTo: id } });
+    } else {
+      const element = document.getElementById(id);
+      element?.scrollIntoView({ behavior: 'smooth' });
+    }
     setIsMenuOpen(false);
   };
 
   if (isLoading) {
-    return null; // Or a loading spinner if you prefer
+    return null;
   }
 
   return (
