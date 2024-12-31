@@ -1,18 +1,21 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Header } from '@/components/Header';
+import { AlphaTestingBanner } from '@/components/AlphaTestingBanner';
 import { MainUploadSection } from '@/components/sections/premium/MainUploadSection';
 import { WatermarkSection } from '@/components/sections/premium/WatermarkSection';
+import { HowToSection } from '@/components/sections/premium/HowToSection';
 import { Button } from '@/components/ui/button';
 import { User } from 'lucide-react';
 import { useUserTier } from '@/hooks/use-user-tier';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 export default function PremiumDashboard() {
   const navigate = useNavigate();
   const { tier, isLoading } = useUserTier();
   const { toast } = useToast();
+  const watermarkRef = useRef<{ getWatermarkSettings: () => any }>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -23,7 +26,13 @@ export default function PremiumDashboard() {
         return;
       }
 
-      if (!isLoading && tier !== 'premium') {
+      // In development, allow access regardless of tier
+      if (import.meta.env.DEV) {
+        return;
+      }
+
+      // In production, check tier
+      if (!isLoading && tier !== 'premium' && tier !== 'platinum') {
         toast({
           title: "Access Denied",
           description: "This dashboard is only available for Premium tier users.",

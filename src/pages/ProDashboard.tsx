@@ -24,7 +24,14 @@ export default function ProDashboard() {
       return;
     }
 
-    if (tier !== 'pro' && tier !== 'premium') {
+    // In development, allow access regardless of tier
+    if (import.meta.env.DEV) {
+      setIsLoading(false);
+      return;
+    }
+
+    // In production, check tier
+    if (tier !== 'pro' && tier !== 'premium' && tier !== 'platinum') {
       toast({
         title: "Access Denied",
         description: "This dashboard is only available for Pro tier users.",
