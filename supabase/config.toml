@@ -1,4 +1,1 @@
 project_id = "xyxpiinqnibqmosvndxv"
-
-[functions.process-pro-images]
-verify_jwt = true
