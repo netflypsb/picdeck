@@ -68,11 +68,11 @@ export default function Auth() {
 
   useAuthStateChange(handleAuthenticatedUser);
 
-  // Move error handling to useEffect to monitor auth state
+  // Monitor auth state changes
   useEffect(() => {
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange((event: AuthChangeEvent, session) => {
       if (event === 'SIGNED_IN' && session) {
         handleAuthenticatedUser(session);
       } else if (event === 'USER_DELETED') {
@@ -94,7 +94,7 @@ export default function Auth() {
     };
   }, [navigate, toast]);
 
-  // Handle auth state errors
+  // Handle auth errors
   useEffect(() => {
     const handleAuthError = (error: AuthError) => {
       let message = "An error occurred during authentication.";
@@ -111,7 +111,7 @@ export default function Auth() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, error) => {
-      if (error) {
+      if (error && error instanceof AuthError) {
         handleAuthError(error);
       }
     });
