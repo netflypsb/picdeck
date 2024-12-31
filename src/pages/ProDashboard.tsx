@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { UploadZone } from '@/components/UploadZone';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Shield, Image, Upload } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { useUserTier } from '@/hooks/use-user-tier';
 
 export default function ProDashboard() {
@@ -18,15 +18,15 @@ export default function ProDashboard() {
   }, []);
 
   const checkAuth = async () => {
-    // In development, skip auth check
-    if (import.meta.env.DEV) {
-      setIsLoading(false);
-      return;
-    }
-
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       navigate('/auth');
+      return;
+    }
+
+    // In development, allow access regardless of tier
+    if (import.meta.env.DEV) {
+      setIsLoading(false);
       return;
     }
 
