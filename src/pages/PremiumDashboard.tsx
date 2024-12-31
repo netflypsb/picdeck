@@ -19,11 +19,6 @@ export default function PremiumDashboard() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      // In development, skip auth check
-      if (import.meta.env.DEV) {
-        return;
-      }
-
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
@@ -31,7 +26,6 @@ export default function PremiumDashboard() {
         return;
       }
 
-      // In production, check tier
       if (!isLoading && tier !== 'premium' && tier !== 'platinum') {
         toast({
           title: "Access Denied",
@@ -45,6 +39,10 @@ export default function PremiumDashboard() {
     checkAuth();
   }, [tier, isLoading, navigate, toast]);
 
+  const handleProcessStart = () => {
+    return watermarkRef.current?.getWatermarkSettings();
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -56,6 +54,7 @@ export default function PremiumDashboard() {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
+      <AlphaTestingBanner />
       
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
@@ -73,10 +72,15 @@ export default function PremiumDashboard() {
         </div>
 
         <div className="space-y-8">
-          <MainUploadSection />
-          <WatermarkSection />
+          <MainUploadSection onProcessStart={handleProcessStart} />
+          <WatermarkSection ref={watermarkRef} />
+          <HowToSection />
         </div>
       </main>
+
+      <footer className="mt-auto py-6 text-center text-sm text-muted-foreground">
+        <p>&copy; {new Date().getFullYear()} PicDeck. All rights reserved.</p>
+      </footer>
     </div>
   );
 }
