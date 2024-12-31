@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Auth as SupabaseAuth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
-import { Session } from '@supabase/supabase-js';
+import { Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { Header } from '@/components/Header';
 import { AlphaTestingBanner } from '@/components/AlphaTestingBanner';
@@ -66,7 +66,7 @@ export default function Auth() {
 
   useAuthStateChange(handleAuthenticatedUser);
 
-  const handleAuthError = (error: any) => {
+  const handleAuthError = (error: AuthError) => {
     let title = "Authentication Error";
     let description = "An error occurred during authentication.";
 
@@ -90,11 +90,7 @@ export default function Auth() {
   supabase.auth.onAuthStateChange((event, session) => {
     if (event === 'SIGNED_IN' && session) {
       handleAuthenticatedUser(session);
-    } else if (event === 'USER_DELETED') {
-      toast({
-        title: "Account Deleted",
-        description: "Your account has been successfully deleted.",
-      });
+    } else if (event === 'SIGNED_OUT') {
       navigate('/');
     } else if (event === 'PASSWORD_RECOVERY') {
       toast({
@@ -136,7 +132,7 @@ export default function Auth() {
             },
           }}
           providers={['google']}
-          onError={(error) => handleAuthError(error)}
+          onError={handleAuthError}
           localization={{
             variables: {
               sign_in: {
