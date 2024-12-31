@@ -10,6 +10,13 @@ export const PRO_TEMPLATES = [
   { name: 'WhatsApp Status', width: 1080, height: 1920 },
   { name: 'Telegram Profile Picture', width: 512, height: 512 },
   { name: 'Telegram Shared Image', width: 1280, height: 1280 },
+  // Adding the new templates
+  { name: 'Instagram Post', width: 1080, height: 1080 },
+  { name: 'Facebook Cover', width: 820, height: 312 },
+  { name: 'WhatsApp Profile', width: 500, height: 500 },
+  { name: 'TikTok Profile', width: 200, height: 200 },
+  { name: 'TikTok Post', width: 1080, height: 1920 },
+  { name: 'YouTube Post', width: 1280, height: 720 }
 ] as const;
 
 export type ProTemplate = typeof PRO_TEMPLATES[number];
