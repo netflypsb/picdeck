@@ -7,6 +7,8 @@ import { Header } from '@/components/Header';
 import { AlphaTestingBanner } from '@/components/AlphaTestingBanner';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthStateChange } from '@/hooks/useAuthStateChange';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -64,10 +66,31 @@ export default function Auth() {
 
   useAuthStateChange(handleAuthenticatedUser);
 
+  const handleAuthError = (error: any) => {
+    let title = "Authentication Error";
+    let description = "An error occurred during authentication.";
+
+    if (error.message.includes("Email already registered")) {
+      title = "Email Already Registered";
+      description = "This email is already associated with an account. Please sign in instead.";
+    } else if (error.message.includes("Invalid login credentials")) {
+      title = "Invalid Credentials";
+      description = "The email or password you entered is incorrect. Please try again.";
+    }
+
+    return (
+      <Alert variant="destructive" className="mb-4">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>{title}</AlertTitle>
+        <AlertDescription>{description}</AlertDescription>
+      </Alert>
+    );
+  };
+
   supabase.auth.onAuthStateChange((event, session) => {
     if (event === 'SIGNED_IN' && session) {
       handleAuthenticatedUser(session);
-    } else if (event === 'USER_DELETED' as any) {
+    } else if (event === 'USER_DELETED') {
       toast({
         title: "Account Deleted",
         description: "Your account has been successfully deleted.",
@@ -113,6 +136,7 @@ export default function Auth() {
             },
           }}
           providers={['google']}
+          onError={(error) => handleAuthError(error)}
           localization={{
             variables: {
               sign_in: {

@@ -19,15 +19,15 @@ export default function PremiumDashboard() {
 
   useEffect(() => {
     const checkAuth = async () => {
+      // In development, skip auth check
+      if (import.meta.env.DEV) {
+        return;
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
         navigate('/auth');
-        return;
-      }
-
-      // In development, allow access regardless of tier
-      if (import.meta.env.DEV) {
         return;
       }
 
