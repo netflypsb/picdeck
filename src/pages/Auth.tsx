@@ -66,27 +66,6 @@ export default function Auth() {
 
   useAuthStateChange(handleAuthenticatedUser);
 
-  const handleAuthError = (error: AuthError) => {
-    let title = "Authentication Error";
-    let description = "An error occurred during authentication.";
-
-    if (error.message.includes("Email already registered")) {
-      title = "Email Already Registered";
-      description = "This email is already associated with an account. Please sign in instead.";
-    } else if (error.message.includes("Invalid login credentials")) {
-      title = "Invalid Credentials";
-      description = "The email or password you entered is incorrect. Please try again.";
-    }
-
-    return (
-      <Alert variant="destructive" className="mb-4">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>{title}</AlertTitle>
-        <AlertDescription>{description}</AlertDescription>
-      </Alert>
-    );
-  };
-
   supabase.auth.onAuthStateChange((event, session) => {
     if (event === 'SIGNED_IN' && session) {
       handleAuthenticatedUser(session);
@@ -132,7 +111,6 @@ export default function Auth() {
             },
           }}
           providers={['google']}
-          onError={handleAuthError}
           localization={{
             variables: {
               sign_in: {
