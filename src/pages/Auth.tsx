@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Auth as SupabaseAuth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
-import { Session, AuthError, AuthChangeEvent } from '@supabase/supabase-js';
+import { Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { Header } from '@/components/Header';
 import { AlphaTestingBanner } from '@/components/AlphaTestingBanner';
@@ -72,16 +72,16 @@ export default function Auth() {
   useEffect(() => {
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event: AuthChangeEvent, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
         handleAuthenticatedUser(session);
-      } else if (event === AuthChangeEvent.USER_DELETED) {
+      } else if (event === 'USER_DELETED') {
         toast({
           title: "Account Deleted",
           description: "Your account has been successfully deleted.",
         });
         navigate('/');
-      } else if (event === AuthChangeEvent.PASSWORD_RECOVERY) {
+      } else if (event === 'PASSWORD_RECOVERY') {
         toast({
           title: "Password Reset",
           description: "Please check your email to reset your password.",
@@ -110,9 +110,9 @@ export default function Auth() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, error) => {
-      if (error && error instanceof AuthError) {
-        handleAuthError(error);
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session instanceof AuthError) {
+        handleAuthError(session);
       }
     });
 
