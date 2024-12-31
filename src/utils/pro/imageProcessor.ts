@@ -36,7 +36,7 @@ export async function processImage(file: File, template: ProTemplate): Promise<B
   });
 }
 
-export async function processImages(files: File[], selectedTemplates: ProTemplate[]): Promise<Blob> {
+export async function processImages(files: File[], selectedTemplates: readonly ProTemplate[] | ProTemplate[]): Promise<Blob> {
   if (files.length > 20) {
     throw new Error('Maximum of 20 images allowed per batch for Pro tier.');
   }

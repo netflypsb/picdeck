@@ -84,7 +84,8 @@ export default function ProDashboard() {
     setProgress(0);
 
     try {
-      const processedZip = await processImages(files, PRO_TEMPLATES);
+      // Create a mutable copy of PRO_TEMPLATES by spreading it into a new array
+      const processedZip = await processImages(files, [...PRO_TEMPLATES]);
 
       const url = URL.createObjectURL(processedZip);
       const link = document.createElement('a');
