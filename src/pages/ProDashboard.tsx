@@ -3,22 +3,29 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { UploadZone } from '@/components/UploadZone';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield, Image, Upload } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Shield, Image, Upload, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUserTier } from '@/hooks/use-user-tier';
+import { PRO_TEMPLATES } from '@/utils/pro/templates';
+import { processImages } from '@/utils/pro/imageProcessor';
+import { ImagePreview } from '@/components/ImagePreview';
+import { Progress } from '@/components/ui/progress';
 
 export default function ProDashboard() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { tier } = useUserTier();
   const [isLoading, setIsLoading] = useState(true);
+  const [files, setFiles] = useState<File[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     checkAuth();
   }, []);
 
   const checkAuth = async () => {
-    // In development, skip auth check
     if (import.meta.env.DEV) {
       setIsLoading(false);
       return;
@@ -30,7 +37,6 @@ export default function ProDashboard() {
       return;
     }
 
-    // In production, check tier
     if (tier !== 'pro' && tier !== 'premium' && tier !== 'platinum') {
       toast({
         title: "Access Denied",
@@ -42,6 +48,68 @@ export default function ProDashboard() {
     }
 
     setIsLoading(false);
+  };
+
+  const handleFilesSelected = (newFiles: File[]) => {
+    if (files.length + newFiles.length > 20) {
+      toast({
+        title: "Too many files",
+        description: "Pro users can upload up to 20 images at once.",
+        variant: "destructive"
+      });
+      return;
+    }
+    setFiles(prev => [...prev, ...newFiles]);
+    toast({
+      title: "Files added",
+      description: `${newFiles.length} files added successfully.`
+    });
+  };
+
+  const removeFile = (index: number) => {
+    setFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleProcessImages = async () => {
+    if (!files.length) {
+      toast({
+        title: "No files selected",
+        description: "Please select at least one file to process.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+    setProgress(0);
+
+    try {
+      const processedZip = await processImages(files, PRO_TEMPLATES);
+
+      const url = URL.createObjectURL(processedZip);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'processed_images.zip';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Success",
+        description: "Images processed and downloaded successfully."
+      });
+    } catch (error) {
+      console.error('Processing error:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "An error occurred while processing images.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
+      setProgress(0);
+    }
   };
 
   if (isLoading) {
@@ -65,21 +133,40 @@ export default function ProDashboard() {
         <UploadZone 
           className="border-2 border-primary/50 rounded-xl p-8 bg-secondary/20 backdrop-blur"
           maxFiles={20}
-          onFilesSelected={(files) => {
-            if (files.length > 20) {
-              toast({
-                title: "Too many files",
-                description: "Pro users can upload up to 20 images at once.",
-                variant: "destructive"
-              });
-              return;
-            }
-            // Handle file upload
-          }}
+          onFilesSelected={handleFilesSelected}
         />
       </div>
 
-      <div className="grid md:grid-cols-3 gap-6">
+      {files.length > 0 && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {files.map((file, index) => (
+              <ImagePreview
+                key={index}
+                file={file}
+                onRemove={() => removeFile(index)}
+              />
+            ))}
+          </div>
+
+          {isProcessing && (
+            <Progress value={progress} className="w-full" />
+          )}
+
+          <div className="flex justify-center">
+            <Button
+              onClick={handleProcessImages}
+              disabled={isProcessing}
+              className="w-full md:w-auto"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              {isProcessing ? 'Processing...' : 'Process & Download'}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <div className="grid md:grid-cols-3 gap-6 mt-8">
         <Card className="bg-card text-card-foreground">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
