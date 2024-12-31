@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Auth as SupabaseAuth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
-import { Session, AuthError } from '@supabase/supabase-js';
+import { Session, AuthError, AuthChangeEvent } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { Header } from '@/components/Header';
 import { AlphaTestingBanner } from '@/components/AlphaTestingBanner';
@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuthStateChange } from '@/hooks/useAuthStateChange';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -68,34 +68,58 @@ export default function Auth() {
 
   useAuthStateChange(handleAuthenticatedUser);
 
-  const handleError = (error: AuthError) => {
-    let message = "An error occurred during authentication.";
+  // Move error handling to useEffect to monitor auth state
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        handleAuthenticatedUser(session);
+      } else if (event === 'USER_DELETED') {
+        toast({
+          title: "Account Deleted",
+          description: "Your account has been successfully deleted.",
+        });
+        navigate('/');
+      } else if (event === 'PASSWORD_RECOVERY') {
+        toast({
+          title: "Password Reset",
+          description: "Please check your email to reset your password.",
+        });
+      }
+    });
 
-    if (error.message.includes("Email already registered")) {
-      message = "This email is already associated with an account. Please sign in instead.";
-    } else if (error.message.includes("Invalid login credentials")) {
-      message = "The email or password you entered is incorrect. Please try again.";
-    }
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate, toast]);
 
-    setAuthError(message);
-  };
+  // Handle auth state errors
+  useEffect(() => {
+    const handleAuthError = (error: AuthError) => {
+      let message = "An error occurred during authentication.";
 
-  supabase.auth.onAuthStateChange((event, session) => {
-    if (event === 'SIGNED_IN' && session) {
-      handleAuthenticatedUser(session);
-    } else if (event === 'USER_DELETED' as AuthChangeEvent) {
-      toast({
-        title: "Account Deleted",
-        description: "Your account has been successfully deleted.",
-      });
-      navigate('/');
-    } else if (event === 'PASSWORD_RECOVERY') {
-      toast({
-        title: "Password Reset",
-        description: "Please check your email to reset your password.",
-      });
-    }
-  });
+      if (error.message.includes("Email already registered")) {
+        message = "This email is already associated with an account. Please sign in instead.";
+      } else if (error.message.includes("Invalid login credentials")) {
+        message = "The email or password you entered is incorrect. Please try again.";
+      }
+
+      setAuthError(message);
+    };
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, error) => {
+      if (error) {
+        handleAuthError(error);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -136,7 +160,6 @@ export default function Auth() {
             },
           }}
           providers={['google']}
-          onError={handleError}
           localization={{
             variables: {
               sign_in: {
