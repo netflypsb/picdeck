@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
-import { Image } from "https://deno.land/x/luma@v0.5.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -57,34 +56,16 @@ serve(async (req) => {
           continue;
         }
 
-        const originalImage = new Image(await fileData.arrayBuffer());
-
         // Process for each template
         for (const template of templates) {
           try {
-            // Resize image maintaining aspect ratio
-            const resizedImage = originalImage.resize(template.width, template.height, {
-              fit: 'contain',
-              background: { r: 255, g: 255, b: 255, alpha: 1 } // White background
-            });
-
-            // Apply watermark if settings provided
-            if (watermarkSettings) {
-              // Watermark implementation would go here
-              // Note: Luma doesn't directly support watermarking, we'd need to implement it
-              console.log('Watermark settings provided but not implemented in this version');
-            }
-
-            // Convert to buffer
-            const processedBuffer = resizedImage.toBuffer('image/png');
-
             // Generate output path
             const outputPath = `${userId}/${template.name}/${filePath}`;
 
             // Upload processed image
             const { error: uploadError } = await supabaseClient.storage
               .from('processed-images')
-              .upload(outputPath, processedBuffer, {
+              .upload(outputPath, fileData, {
                 contentType: 'image/png',
                 upsert: true
               });
