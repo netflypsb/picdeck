@@ -1,4 +1,0 @@
-project_id = "xyxpiinqnibqmosvndxv"
-
-[global.env]
-SHARP_PATH = "/usr/local/lib/node_modules/sharp"
