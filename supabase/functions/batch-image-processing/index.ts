@@ -1,25 +1,27 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import ImageMagick from "https://deno.land/x/imagemagick_deno@0.0.19/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface ProcessingRequest {
-  userId: string;
-  filePaths: string[];
-  templates: Array<{ name: string; width: number; height: number }>;
-  watermarkSettings?: {
-    type: 'image' | 'text';
-    text?: string;
-    imageUrl?: string;
-    transparency: number;
-    scale: number;
-    placement: string;
-    tiling: boolean;
-    spacing: number;
-  };
+interface Template {
+  name: string;
+  width: number;
+  height: number;
+}
+
+interface WatermarkSettings {
+  type: 'image' | 'text';
+  text?: string;
+  imageUrl?: string;
+  transparency: number;
+  scale: number;
+  placement: string;
+  tiling: boolean;
+  spacing: number;
 }
 
 serve(async (req) => {
@@ -34,7 +36,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { userId, filePaths, templates, watermarkSettings }: ProcessingRequest = await req.json();
+    const { userId, filePaths, templates, watermarkSettings } = await req.json();
 
     if (!userId || !filePaths || !templates) {
       throw new Error('Missing required parameters');
@@ -56,16 +58,54 @@ serve(async (req) => {
           continue;
         }
 
+        // Convert file to buffer
+        const imageBuffer = await fileData.arrayBuffer();
+
         // Process for each template
         for (const template of templates) {
           try {
+            // Process image with ImageMagick
+            const processedBuffer = await ImageMagick.execute({
+              input: new Uint8Array(imageBuffer),
+              commands: [
+                'convert',
+                '-',  // Read from stdin
+                '-resize', `${template.width}x${template.height}^`,  // Resize and maintain aspect ratio
+                '-gravity', 'center',
+                '-extent', `${template.width}x${template.height}`,  // Ensure exact dimensions
+                '-quality', '90',
+              ],
+            });
+
+            // Apply watermark if settings provided
+            if (watermarkSettings) {
+              const watermarkCommands = [];
+              if (watermarkSettings.type === 'text' && watermarkSettings.text) {
+                watermarkCommands.push(
+                  '-gravity', watermarkSettings.placement.toLowerCase(),
+                  '-fill', 'white',
+                  '-font', 'Arial',
+                  '-pointsize', '20',
+                  '-draw', `text 0,0 "${watermarkSettings.text}"`
+                );
+              }
+              // Apply watermark commands if any
+              if (watermarkCommands.length > 0) {
+                const watermarkedBuffer = await ImageMagick.execute({
+                  input: processedBuffer,
+                  commands: watermarkCommands,
+                });
+                processedBuffer = watermarkedBuffer;
+              }
+            }
+
             // Generate output path
             const outputPath = `${userId}/${template.name}/${filePath}`;
 
             // Upload processed image
             const { error: uploadError } = await supabaseClient.storage
               .from('processed-images')
-              .upload(outputPath, fileData, {
+              .upload(outputPath, processedBuffer, {
                 contentType: 'image/png',
                 upsert: true
               });
