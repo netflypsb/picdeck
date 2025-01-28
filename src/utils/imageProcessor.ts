@@ -1,4 +1,5 @@
 import JSZip from 'jszip';
+import { supabase } from '@/integrations/supabase/client';
 
 export const SOCIAL_TEMPLATES = {
   ALL: { name: 'All Templates', width: 0, height: 0 },
@@ -61,46 +62,45 @@ interface ProcessingOptions {
   watermarkSettings?: WatermarkSettings;
 }
 
-function calculatePosition(
-  canvas: HTMLCanvasElement,
-  watermarkWidth: number,
-  watermarkHeight: number,
-  placement: string
-): { x: number; y: number } {
-  let x = 0, y = 0;
-  
-  switch (placement) {
-    case 'top-left':
-      x = 10;
-      y = 10;
-      break;
-    case 'center':
-      x = (canvas.width - watermarkWidth) / 2;
-      y = (canvas.height - watermarkHeight) / 2;
-      break;
-    case 'bottom-right':
-      x = canvas.width - watermarkWidth - 10;
-      y = canvas.height - watermarkHeight - 10;
-      break;
-  }
-  
-  return { x, y };
-}
+async function processImageWithEdgeFunction(
+  file: File,
+  template: Template,
+  watermarkSettings?: WatermarkSettings
+): Promise<Blob> {
+  const formData = new FormData();
+  formData.append('image', file);
+  formData.append('width', template.width.toString());
+  formData.append('height', template.height.toString());
 
-function generateTilingPositions(
-  canvasWidth: number,
-  canvasHeight: number,
-  watermarkWidth: number,
-  watermarkHeight: number,
-  spacing: number
-): Array<{ x: number; y: number }> {
-  const positions = [];
-  for (let y = 0; y < canvasHeight; y += watermarkHeight + spacing) {
-    for (let x = 0; x < canvasWidth; x += watermarkWidth + spacing) {
-      positions.push({ x, y });
-    }
+  const { data, error } = await supabase.functions.invoke('process-image', {
+    body: formData,
+  });
+
+  if (error) {
+    console.error('Error processing image:', error);
+    throw new Error('Failed to process image');
   }
-  return positions;
+
+  const response = await fetch(URL.createObjectURL(new Blob([data])));
+  const blob = await response.blob();
+
+  if (watermarkSettings) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d')!;
+    const img = await createImageBitmap(blob);
+    
+    canvas.width = template.width;
+    canvas.height = template.height;
+    
+    ctx.drawImage(img, 0, 0);
+    await applyWatermark(ctx, canvas, watermarkSettings);
+    
+    return new Promise((resolve) => {
+      canvas.toBlob((processedBlob) => resolve(processedBlob!), 'image/jpeg', 0.9);
+    });
+  }
+
+  return blob;
 }
 
 async function applyWatermark(
@@ -159,11 +159,59 @@ async function applyWatermark(
   ctx.restore();
 }
 
+function calculatePosition(
+  canvas: HTMLCanvasElement,
+  watermarkWidth: number,
+  watermarkHeight: number,
+  placement: string
+): { x: number; y: number } {
+  let x = 0, y = 0;
+  
+  switch (placement) {
+    case 'top-left':
+      x = 10;
+      y = 10;
+      break;
+    case 'center':
+      x = (canvas.width - watermarkWidth) / 2;
+      y = (canvas.height - watermarkHeight) / 2;
+      break;
+    case 'bottom-right':
+      x = canvas.width - watermarkWidth - 10;
+      y = canvas.height - watermarkHeight - 10;
+      break;
+  }
+  
+  return { x, y };
+}
+
+function generateTilingPositions(
+  canvasWidth: number,
+  canvasHeight: number,
+  watermarkWidth: number,
+  watermarkHeight: number,
+  spacing: number
+): Array<{ x: number; y: number }> {
+  const positions = [];
+  for (let y = 0; y < canvasHeight; y += watermarkHeight + spacing) {
+    for (let x = 0; x < canvasWidth; x += watermarkWidth + spacing) {
+      positions.push({ x, y });
+    }
+  }
+  return positions;
+}
+
 export async function processImage(
   file: File,
   template: Template,
   watermarkSettings?: WatermarkSettings
 ): Promise<Blob> {
+  const userTier = await getUserTier();
+  
+  if (userTier === 'premium' || userTier === 'platinum') {
+    return processImageWithEdgeFunction(file, template, watermarkSettings);
+  }
+
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = async () => {
@@ -190,12 +238,25 @@ export async function processImage(
 
       canvas.toBlob(
         (blob) => resolve(blob!),
-        'image/png',
-        1.0
+        'image/jpeg',
+        0.9
       );
     };
     img.src = URL.createObjectURL(file);
   });
+}
+
+async function getUserTier(): Promise<string> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return 'free';
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('tier')
+    .eq('id', user.id)
+    .single();
+
+  return profile?.tier || 'free';
 }
 
 export async function processImages(files: File[], options: ProcessingOptions): Promise<Blob> {
