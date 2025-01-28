@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { decode, encode } from 'https://deno.land/x/imagescript@1.2.15/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -24,17 +25,51 @@ serve(async (req) => {
       )
     }
 
-    const arrayBuffer = await imageFile.arrayBuffer()
-    const uint8Array = new Uint8Array(arrayBuffer)
+    console.log(`Processing image: ${imageFile.name} to ${width}x${height}`);
 
-    // Process image using native fetch to an image processing service
-    // For now, return the original image as we need to implement a proper image processing service
+    const arrayBuffer = await imageFile.arrayBuffer()
+    const sourceImage = await decode(new Uint8Array(arrayBuffer));
+    
+    // Calculate scaling to maintain aspect ratio
+    const aspectRatio = sourceImage.width / sourceImage.height;
+    const targetAspectRatio = width / height;
+    
+    let scaledWidth = width;
+    let scaledHeight = height;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    if (aspectRatio > targetAspectRatio) {
+      // Image is wider than target
+      scaledHeight = Math.round(width / aspectRatio);
+      offsetY = Math.round((height - scaledHeight) / 2);
+    } else {
+      // Image is taller than target
+      scaledWidth = Math.round(height * aspectRatio);
+      offsetX = Math.round((width - scaledWidth) / 2);
+    }
+
+    // Create a white background
+    const resizedImage = new ImageScript.Image(width, height);
+    resizedImage.fill([255, 255, 255, 255]);
+
+    // Resize the source image
+    const scaled = sourceImage.resize(scaledWidth, scaledHeight);
+    
+    // Composite the scaled image onto the white background
+    resizedImage.composite(scaled, offsetX, offsetY);
+
+    // Encode the final image
+    const processedImage = await encode(resizedImage, 'png');
+
+    console.log('Image processing completed successfully');
+
     return new Response(
-      uint8Array,
+      processedImage,
       { 
         headers: { 
           ...corsHeaders,
-          'Content-Type': imageFile.type,
+          'Content-Type': 'image/png',
           'Content-Disposition': 'attachment; filename="processed.png"'
         }
       }
