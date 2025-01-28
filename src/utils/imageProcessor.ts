@@ -1,10 +1,20 @@
 import JSZip from 'jszip';
 import { supabase } from '@/integrations/supabase/client';
 
-export type Template = {
+export interface Template {
   name: string;
   width: number;
   height: number;
+}
+
+export const SOCIAL_TEMPLATES: Record<string, Template> = {
+  ALL: { name: 'All Templates', width: 0, height: 0 },
+  INSTAGRAM_SQUARE: { name: 'Instagram Square', width: 1080, height: 1080 },
+  INSTAGRAM_PORTRAIT: { name: 'Instagram Portrait', width: 1080, height: 1350 },
+  INSTAGRAM_LANDSCAPE: { name: 'Instagram Landscape', width: 1080, height: 608 },
+  FACEBOOK_POST: { name: 'Facebook Post', width: 1200, height: 630 },
+  TWITTER_POST: { name: 'Twitter Post', width: 1200, height: 675 },
+  LINKEDIN_POST: { name: 'LinkedIn Post', width: 1200, height: 627 },
 };
 
 export interface WatermarkSettings {
