@@ -1,6 +1,49 @@
 import JSZip from 'jszip';
 import { supabase } from '@/integrations/supabase/client';
-import { Template } from './image/templates';
+
+export interface Template {
+  name: string;
+  width: number;
+  height: number;
+}
+
+export const SOCIAL_TEMPLATES: Record<string, Template> = {
+  ALL: {
+    name: 'All Templates',
+    width: 0,
+    height: 0
+  },
+  INSTAGRAM_SQUARE: {
+    name: 'Instagram Square',
+    width: 1080,
+    height: 1080
+  },
+  INSTAGRAM_PORTRAIT: {
+    name: 'Instagram Portrait',
+    width: 1080,
+    height: 1350
+  },
+  INSTAGRAM_LANDSCAPE: {
+    name: 'Instagram Landscape',
+    width: 1080,
+    height: 608
+  },
+  FACEBOOK: {
+    name: 'Facebook Post',
+    width: 1200,
+    height: 630
+  },
+  TWITTER: {
+    name: 'Twitter Post',
+    width: 1200,
+    height: 675
+  },
+  LINKEDIN: {
+    name: 'LinkedIn Post',
+    width: 1200,
+    height: 627
+  }
+};
 
 interface WatermarkSettings {
   type: 'image' | 'text';
@@ -42,7 +85,6 @@ async function processImageWithEdgeFunction(
     throw new Error('Failed to process image');
   }
 
-  // Convert the response data to a Blob
   return new Blob([data], { type: 'image/jpeg' });
 }
 
