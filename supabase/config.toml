@@ -1,1 +1,4 @@
 project_id = "xyxpiinqnibqmosvndxv"
+
+[functions.batch-image-processing]
+verify_jwt = true

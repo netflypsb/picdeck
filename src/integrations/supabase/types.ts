@@ -33,6 +33,39 @@ export type Database = {
         }
         Relationships: []
       }
+      image_processing_queue: {
+        Row: {
+          created_at: string
+          id: string
+          original_path: string
+          status: string
+          templates: Json
+          updated_at: string
+          user_id: string | null
+          watermark_settings: Json | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          original_path: string
+          status?: string
+          templates: Json
+          updated_at?: string
+          user_id?: string | null
+          watermark_settings?: Json | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          original_path?: string
+          status?: string
+          templates?: Json
+          updated_at?: string
+          user_id?: string | null
+          watermark_settings?: Json | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
