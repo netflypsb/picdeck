@@ -1,3 +1,4 @@
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreditCard } from 'lucide-react';
@@ -19,9 +20,11 @@ export function SubscriptionCard() {
       <CardContent className="space-y-4">
         <div className="flex justify-between items-center">
           <p>Current Plan: {tier.charAt(0).toUpperCase() + tier.slice(1)} Tier</p>
-          <Button onClick={() => navigate('/pricing')}>
-            Upgrade Plan
-          </Button>
+          {tier === 'free' && (
+            <Button onClick={() => navigate('/pricing')}>
+              Upgrade Plan
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>
