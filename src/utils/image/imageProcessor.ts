@@ -1,6 +1,27 @@
+
 import JSZip from 'jszip';
 import { FREE_TEMPLATES, type Template } from './templates';
 import { applyWatermark } from './watermarkProcessor';
+import { supabase } from '@/integrations/supabase/client';
+
+interface WatermarkSettings {
+  type: 'image' | 'text';
+  text?: string;
+  imageUrl?: string;
+  transparency: number;
+  scale: number;
+  placement: string;
+  tiling: boolean;
+  spacing: number;
+}
+
+interface ProcessingOptions {
+  templates: Template[];
+  customSize?: { width: number; height: number };
+  preserveAspectRatio?: boolean;
+  watermarkSettings?: WatermarkSettings;
+  resizeMode?: 'fit' | 'fill';
+}
 
 export async function processImage(file: File, template: Template): Promise<Blob> {
   return new Promise((resolve) => {
@@ -39,23 +60,59 @@ export async function processImage(file: File, template: Template): Promise<Blob
   });
 }
 
-export async function processImages(files: File[]): Promise<Blob> {
-  if (files.length > 5) {
-    throw new Error('Maximum of 5 images allowed per batch.');
+export async function processImages(files: File[], options: ProcessingOptions): Promise<Blob> {
+  if (files.length > 50) {
+    throw new Error('Maximum of 50 images allowed per batch.');
   }
 
-  const zip = new JSZip();
-  
-  for (const file of files) {
-    for (const template of FREE_TEMPLATES) {
-      const processedImage = await processImage(file, template);
-      const fileName = file.name.replace(
-        /(\.[\w\d_-]+)$/i,
-        `_${template.name.replace(/\s+/g, '')}_${template.width}x${template.height}$1`
-      );
-      zip.file(fileName, processedImage);
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      throw new Error('No authenticated session found');
     }
-  }
 
-  return await zip.generateAsync({ type: 'blob' });
+    const userId = session.user.id;
+    const filePaths = [];
+
+    // Upload original images
+    for (const file of files) {
+      const fileName = `${Date.now()}-${file.name}`;
+      const { error: uploadError, data } = await supabase.storage
+        .from('original-images')
+        .upload(`${userId}/${fileName}`, file);
+
+      if (uploadError) throw uploadError;
+      filePaths.push(data.path);
+    }
+
+    // Process images using the edge function
+    const { data: processedData, error: processError } = await supabase.functions.invoke(
+      'batch-image-processing',
+      {
+        body: {
+          userId,
+          filePaths,
+          templates: options.templates,
+          watermarkSettings: options.watermarkSettings,
+          resizeMode: options.resizeMode || 'fill',
+        },
+      }
+    );
+
+    if (processError) throw processError;
+
+    // Download and package the processed images
+    const zip = new JSZip();
+
+    for (const image of processedData.processedImages) {
+      const response = await fetch(image.url);
+      const blob = await response.blob();
+      zip.file(`${image.template}/${image.path.split('/').pop()}`, blob);
+    }
+
+    return await zip.generateAsync({ type: 'blob' });
+  } catch (error) {
+    console.error('Error in processImages:', error);
+    throw error;
+  }
 }
