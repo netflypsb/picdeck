@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Template, processImages } from '@/utils/imageProcessor';
+import { Template, processImages } from '@/utils/image/imageProcessor';
 import { TemplateSelector } from './TemplateSelector';
 import { CustomSizeInput } from './CustomSizeInput';
 import { UploadZone } from '@/components/UploadZone';
