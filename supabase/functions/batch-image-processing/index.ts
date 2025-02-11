@@ -25,6 +25,8 @@ interface WatermarkSettings {
   spacing: number;
 }
 
+type ResizeMode = 'fit' | 'fill';
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -37,13 +39,13 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { userId, filePaths, templates, watermarkSettings } = await req.json();
+    const { userId, filePaths, templates, watermarkSettings, resizeMode = 'fill' } = await req.json();
 
     if (!userId || !filePaths || !templates) {
       throw new Error('Missing required parameters');
     }
 
-    console.log(`Processing ${filePaths.length} images for user ${userId}`);
+    console.log(`Processing ${filePaths.length} images for user ${userId} with resize mode: ${resizeMode}`);
 
     const processedImages = [];
 
@@ -65,18 +67,34 @@ serve(async (req) => {
         // Process for each template
         for (const template of templates) {
           try {
-            // Process image with ImageMagick
-            let processedBuffer = await ImageMagick.execute({
-              input: new Uint8Array(imageBuffer),
-              commands: [
-                'convert',
-                '-',  // Read from stdin
-                '-resize', `${template.width}x${template.height}^`,  // Resize and maintain aspect ratio
-                '-gravity', 'center',
-                '-extent', `${template.width}x${template.height}`,  // Ensure exact dimensions
-                '-quality', '90',
-              ],
-            });
+            // Process image with ImageMagick based on resize mode
+            let processedBuffer;
+            
+            if (resizeMode === 'fit') {
+              // Fit mode: resize to fit within dimensions, maintaining aspect ratio
+              processedBuffer = await ImageMagick.execute({
+                input: new Uint8Array(imageBuffer),
+                commands: [
+                  'convert',
+                  '-',  // Read from stdin
+                  '-resize', `${template.width}x${template.height}>`,  // Only shrink larger images
+                  'PNG:-'  // Output as PNG
+                ],
+              });
+            } else {
+              // Fill mode: resize to fill dimensions and crop excess
+              processedBuffer = await ImageMagick.execute({
+                input: new Uint8Array(imageBuffer),
+                commands: [
+                  'convert',
+                  '-',  // Read from stdin
+                  '-resize', `${template.width}x${template.height}^`,  // Fill area
+                  '-gravity', 'center',
+                  '-extent', `${template.width}x${template.height}`,  // Crop to exact size
+                  'PNG:-'  // Output as PNG
+                ],
+              });
+            }
 
             // Apply watermark if settings provided
             if (watermarkSettings) {
