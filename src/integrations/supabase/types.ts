@@ -66,26 +66,136 @@ export type Database = {
         }
         Relationships: []
       }
+      prices: {
+        Row: {
+          active: boolean | null
+          created_at: string
+          currency: string | null
+          id: string
+          interval: string | null
+          interval_count: number | null
+          metadata: Json | null
+          product_id: string | null
+          trial_period_days: number | null
+          type: string | null
+          unit_amount: number | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string
+          currency?: string | null
+          id: string
+          interval?: string | null
+          interval_count?: number | null
+          metadata?: Json | null
+          product_id?: string | null
+          trial_period_days?: number | null
+          type?: string | null
+          unit_amount?: number | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          interval?: string | null
+          interval_count?: number | null
+          metadata?: Json | null
+          product_id?: string | null
+          trial_period_days?: number | null
+          type?: string | null
+          unit_amount?: number | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
           id: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
           tier: string
           updated_at: string
         }
         Insert: {
           created_at?: string
           id: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           tier?: string
           updated_at?: string
         }
         Update: {
           created_at?: string
           id?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           tier?: string
           updated_at?: string
         }
         Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          cancel_at: string | null
+          cancel_at_period_end: boolean | null
+          canceled_at: string | null
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          ended_at: string | null
+          id: string
+          metadata: Json | null
+          price_id: string | null
+          quantity: number | null
+          status: string | null
+          trial_end: string | null
+          trial_start: string | null
+          user_id: string
+        }
+        Insert: {
+          cancel_at?: string | null
+          cancel_at_period_end?: boolean | null
+          canceled_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          ended_at?: string | null
+          id: string
+          metadata?: Json | null
+          price_id?: string | null
+          quantity?: number | null
+          status?: string | null
+          trial_end?: string | null
+          trial_start?: string | null
+          user_id: string
+        }
+        Update: {
+          cancel_at?: string | null
+          cancel_at_period_end?: boolean | null
+          canceled_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          ended_at?: string | null
+          id?: string
+          metadata?: Json | null
+          price_id?: string | null
+          quantity?: number | null
+          status?: string | null
+          trial_end?: string | null
+          trial_start?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_price_id_fkey"
+            columns: ["price_id"]
+            isOneToOne: false
+            referencedRelation: "prices"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
