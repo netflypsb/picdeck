@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 import ImageMagick from "https://deno.land/x/imagemagick_deno@0.0.19/mod.ts";
@@ -65,7 +66,7 @@ serve(async (req) => {
         for (const template of templates) {
           try {
             // Process image with ImageMagick
-            const processedBuffer = await ImageMagick.execute({
+            let processedBuffer = await ImageMagick.execute({
               input: new Uint8Array(imageBuffer),
               commands: [
                 'convert',
@@ -80,7 +81,9 @@ serve(async (req) => {
             // Apply watermark if settings provided
             if (watermarkSettings) {
               const watermarkCommands = [];
+
               if (watermarkSettings.type === 'text' && watermarkSettings.text) {
+                // Text watermark
                 watermarkCommands.push(
                   '-gravity', watermarkSettings.placement.toLowerCase(),
                   '-fill', 'white',
@@ -88,14 +91,80 @@ serve(async (req) => {
                   '-pointsize', '20',
                   '-draw', `text 0,0 "${watermarkSettings.text}"`
                 );
+              } else if (watermarkSettings.type === 'image' && watermarkSettings.imageUrl) {
+                try {
+                  // Download watermark image
+                  console.log('Downloading watermark image:', watermarkSettings.imageUrl);
+                  const watermarkResponse = await fetch(watermarkSettings.imageUrl);
+                  if (!watermarkResponse.ok) {
+                    throw new Error(`Failed to download watermark image: ${watermarkResponse.statusText}`);
+                  }
+                  
+                  const watermarkBuffer = await watermarkResponse.arrayBuffer();
+                  
+                  // Create temporary watermark image with proper sizing and transparency
+                  const preparedWatermark = await ImageMagick.execute({
+                    input: new Uint8Array(watermarkBuffer),
+                    commands: [
+                      'convert',
+                      '-',
+                      '-resize', `${watermarkSettings.scale}%`,
+                      '-alpha', 'set',
+                      '-channel', 'A',
+                      '-evaluate', 'multiply', `${watermarkSettings.transparency / 100}`,
+                      '+channel',
+                      'PNG:-'
+                    ],
+                  });
+
+                  if (watermarkSettings.tiling) {
+                    // Create tiled watermark
+                    processedBuffer = await ImageMagick.execute({
+                      input: processedBuffer,
+                      commands: [
+                        'convert',
+                        '-',
+                        '(',
+                        'PNG:-',  // Second input image (watermark)
+                        '-write', 'mpr:watermark',
+                        '+delete',
+                        ')',
+                        '(',
+                        '+clone',
+                        '-tile', 'mpr:watermark',
+                        '-gravity', watermarkSettings.placement.toLowerCase(),
+                        '-geometry', `+${watermarkSettings.spacing}+${watermarkSettings.spacing}`,
+                        '-composite',
+                        ')',
+                        '-composite'
+                      ],
+                      secondInput: preparedWatermark,
+                    });
+                  } else {
+                    // Single watermark placement
+                    processedBuffer = await ImageMagick.execute({
+                      input: processedBuffer,
+                      commands: [
+                        'convert',
+                        '-',
+                        'PNG:-',  // Second input image (watermark)
+                        '-gravity', watermarkSettings.placement.toLowerCase(),
+                        '-composite'
+                      ],
+                      secondInput: preparedWatermark,
+                    });
+                  }
+                } catch (watermarkError) {
+                  console.error('Error processing watermark:', watermarkError);
+                }
               }
-              // Apply watermark commands if any
+
+              // Apply text watermark commands if any
               if (watermarkCommands.length > 0) {
-                const watermarkedBuffer = await ImageMagick.execute({
+                processedBuffer = await ImageMagick.execute({
                   input: processedBuffer,
                   commands: watermarkCommands,
                 });
-                processedBuffer = watermarkedBuffer;
               }
             }
 
