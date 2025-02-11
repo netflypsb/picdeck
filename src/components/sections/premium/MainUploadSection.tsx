@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { processImages } from '@/utils/image/imageProcessor';
 import { type Template } from '@/utils/image/templates';
 import { TemplateSelector } from './TemplateSelector';
 import { CustomSizeInput } from './CustomSizeInput';
@@ -11,6 +10,7 @@ import { UploadHeader } from './upload/UploadHeader';
 import { ProcessingButton } from './upload/ProcessingButton';
 import { UploadedImages } from './upload/UploadedImages';
 import { ResizeModeSelector } from './ResizeModeSelector';
+import { supabase } from '@/integrations/supabase/client';
 
 interface MainUploadSectionProps {
   onProcessStart?: () => any;
@@ -89,22 +89,55 @@ export function MainUploadSection({
       const watermarkSettings = onProcessStart?.();
       console.log('Processing with watermark settings:', watermarkSettings);
 
-      const processedZip = await processImages(files, {
-        templates: useCustomSize ? [] : selectedTemplates,
-        customSize: useCustomSize ? { width: customWidth, height: customHeight } : undefined,
-        preserveAspectRatio: true,
-        watermarkSettings,
-        resizeMode
+      // Get the current user's ID
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      // Upload files to original-images bucket
+      const filePaths: string[] = [];
+      for (const file of files) {
+        const fileName = `${Date.now()}-${file.name}`;
+        const { error: uploadError, data } = await supabase.storage
+          .from('original-images')
+          .upload(`${user.id}/${fileName}`, file);
+
+        if (uploadError) throw uploadError;
+        if (data) filePaths.push(data.path);
+      }
+
+      // Process images using the edge function
+      const templates = useCustomSize 
+        ? [{ name: 'custom', width: customWidth, height: customHeight }]
+        : selectedTemplates;
+
+      const { data, error } = await supabase.functions.invoke('batch-image-processing', {
+        body: {
+          userId: user.id,
+          filePaths,
+          templates,
+          watermarkSettings,
+          resizeMode
+        }
       });
 
-      const url = URL.createObjectURL(processedZip);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'processed_images.zip';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      if (error) throw error;
+
+      // Create and download zip file
+      if (data.processedImages && data.processedImages.length > 0) {
+        // We'll use the first set of processed images to download
+        const response = await fetch(data.processedImages[0].url);
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'processed_images.zip';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
 
       toast({
         title: "Success",
