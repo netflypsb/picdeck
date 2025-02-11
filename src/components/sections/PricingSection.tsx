@@ -1,20 +1,16 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUserTier } from '@/hooks/use-user-tier';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { StripePrice } from '@/types/database';
+import { useToast } from '@/hooks/use-toast';
 
 const pricingFeatures = {
-  pro: [
-    { platform: 'Instagram', sizes: ['Portrait Post: 1080 x 1350', 'Landscape Post: 1080 x 566', 'Story: 1080 x 1920'] },
-    { platform: 'Facebook', sizes: ['Profile Picture: 170 x 170', 'Shared Image Post: 1200 x 630', 'Event Cover: 1920 x 1005'] },
-    { platform: 'YouTube', sizes: ['Channel Banner: 2560 x 1440', 'Profile Picture: 800 x 800'] },
-    { platform: 'WhatsApp', sizes: ['Status: 1080 x 1920'] },
-    { platform: 'Telegram', sizes: ['Profile Picture: 512 x 512', 'Shared Image: 1280 x 1280'] }
-  ],
-  premium: [
+  platinum: [
     { platform: 'Instagram', sizes: ['IGTV Cover: 420 x 654', 'Reel Cover: 420 x 654'] },
     { platform: 'Facebook', sizes: ['Group Cover: 1640 x 856', 'Carousel Ad: 1080 x 1080', 'Story Ad: 1080 x 1920'] },
     { platform: 'TikTok', sizes: ['Store Product: 800 x 800', 'Store Header: 1200 x 628'] },
@@ -25,22 +21,75 @@ const pricingFeatures = {
 };
 
 export function PricingSection() {
-  const [expandedCard, setExpandedCard] = useState<'pro' | 'premium' | null>(null);
-  const { tier, assignTier } = useUserTier();
+  const [expandedCard, setExpandedCard] = useState<'platinum' | null>(null);
+  const { tier } = useUserTier();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [prices, setPrices] = useState<StripePrice[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleGetStarted = async (selectedTier: 'pro' | 'premium') => {
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session) {
-      navigate('/auth');
-      return;
+  useEffect(() => {
+    fetchPrices();
+  }, []);
+
+  const fetchPrices = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('prices')
+        .select('*')
+        .eq('active', true)
+        .order('unit_amount', { ascending: true });
+
+      if (error) {
+        throw error;
+      }
+
+      setPrices(data as StripePrice[]);
+    } catch (error) {
+      console.error('Error fetching prices:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load subscription prices",
+        variant: "destructive"
+      });
     }
+  };
 
-    // For now, assign the selected tier
-    await assignTier(session.user.id, selectedTier);
-    navigate(`/${selectedTier.toLowerCase()}-dashboard`);
-  }
+  const handleSubscribe = async (priceId: string) => {
+    try {
+      setIsLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        navigate('/auth');
+        return;
+      }
+
+      // Create a checkout session
+      const { data: { url }, error } = await supabase.functions.invoke('create-checkout-session', {
+        body: { priceId }
+      });
+
+      if (error) throw error;
+
+      // Redirect to Stripe Checkout
+      window.location.href = url;
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to start subscription process",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getPriceString = (price: StripePrice) => {
+    const amount = (price.unit_amount / 100).toFixed(2);
+    return `$${amount}${price.interval ? `/${price.interval}` : ''}`;
+  };
 
   return (
     <section id="pricing" className="py-12 space-y-8">
@@ -50,84 +99,61 @@ export function PricingSection() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto px-4">
-        {/* Pro Card */}
+        {/* Free Card */}
         <Card className="relative">
           <CardHeader>
-            <CardTitle>Pro</CardTitle>
-            <CardDescription>Perfect for professionals</CardDescription>
-            <div className="text-3xl font-bold">$4.99<span className="text-lg font-normal text-muted-foreground">/month</span></div>
+            <CardTitle>Free</CardTitle>
+            <CardDescription>Get started with the basics</CardDescription>
+            <div className="text-3xl font-bold">$0<span className="text-lg font-normal text-muted-foreground">/month</span></div>
           </CardHeader>
           <CardContent className="space-y-4">
             <ul className="space-y-2">
               <li className="flex items-center gap-2">
                 <Check className="text-green-500" />
-                No watermarks
+                Basic image resizing
               </li>
               <li className="flex items-center gap-2">
                 <Check className="text-green-500" />
-                Batch upload (20 images)
+                5 templates
               </li>
               <li className="flex items-center gap-2">
                 <Check className="text-green-500" />
-                10+ templates
+                Standard support
               </li>
             </ul>
-            {expandedCard === 'pro' && (
-              <div className="space-y-4 animate-accordion-down">
-                {pricingFeatures.pro.map((platform) => (
-                  <div key={platform.platform}>
-                    <h4 className="font-semibold">{platform.platform}</h4>
-                    <ul className="list-disc pl-5 text-sm text-muted-foreground">
-                      {platform.sizes.map((size) => (
-                        <li key={size}>{size}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            )}
           </CardContent>
           <CardFooter className="flex-col gap-4">
             <Button 
               className="w-full"
-              onClick={() => handleGetStarted('pro')}
-              disabled={tier === 'pro'}
+              variant="outline"
+              disabled={tier === 'free'}
             >
-              {tier === 'pro' ? 'Current Plan' : 'Get Started'}
-            </Button>
-            <Button 
-              variant="outline" 
-              className="w-full"
-              onClick={() => setExpandedCard(expandedCard === 'pro' ? null : 'pro')}
-            >
-              {expandedCard === 'pro' ? (
-                <>Hide Features <ChevronUp className="ml-2" /></>
-              ) : (
-                <>Show Features <ChevronDown className="ml-2" /></>
-              )}
+              {tier === 'free' ? 'Current Plan' : 'Start Free'}
             </Button>
           </CardFooter>
         </Card>
 
-        {/* Premium Card */}
+        {/* Platinum Card */}
         <Card className="relative border-primary">
           <div className="absolute -top-3 right-4 bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm">
             Best Value
           </div>
           <CardHeader>
-            <CardTitle>Premium</CardTitle>
+            <CardTitle>Platinum</CardTitle>
             <CardDescription>For power users</CardDescription>
-            <div className="text-3xl font-bold">$12.99<span className="text-lg font-normal text-muted-foreground">/month</span></div>
+            <div className="text-3xl font-bold">
+              {prices.length > 0 ? (
+                getPriceString(prices[0])
+              ) : (
+                '$12.99/month'
+              )}
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <ul className="space-y-2">
               <li className="flex items-center gap-2">
                 <Check className="text-green-500" />
-                Everything in Pro
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="text-green-500" />
-                Batch upload (50 images)
+                Everything in Free
               </li>
               <li className="flex items-center gap-2">
                 <Check className="text-green-500" />
@@ -137,10 +163,14 @@ export function PricingSection() {
                 <Check className="text-green-500" />
                 20+ templates
               </li>
+              <li className="flex items-center gap-2">
+                <Check className="text-green-500" />
+                Priority support
+              </li>
             </ul>
-            {expandedCard === 'premium' && (
+            {expandedCard === 'platinum' && (
               <div className="space-y-4 animate-accordion-down">
-                {pricingFeatures.premium.map((platform) => (
+                {pricingFeatures.platinum.map((platform) => (
                   <div key={platform.platform}>
                     <h4 className="font-semibold">{platform.platform}</h4>
                     <ul className="list-disc pl-5 text-sm text-muted-foreground">
@@ -156,17 +186,17 @@ export function PricingSection() {
           <CardFooter className="flex-col gap-4">
             <Button 
               className="w-full"
-              onClick={() => handleGetStarted('premium')}
-              disabled={tier === 'premium'}
+              onClick={() => prices.length > 0 && handleSubscribe(prices[0].id)}
+              disabled={tier === 'platinum' || isLoading}
             >
-              {tier === 'premium' ? 'Current Plan' : 'Get Started'}
+              {tier === 'platinum' ? 'Current Plan' : isLoading ? 'Loading...' : 'Get Started'}
             </Button>
             <Button 
               variant="outline" 
               className="w-full"
-              onClick={() => setExpandedCard(expandedCard === 'premium' ? null : 'premium')}
+              onClick={() => setExpandedCard(expandedCard === 'platinum' ? null : 'platinum')}
             >
-              {expandedCard === 'premium' ? (
+              {expandedCard === 'platinum' ? (
                 <>Hide Features <ChevronUp className="ml-2" /></>
               ) : (
                 <>Show Features <ChevronDown className="ml-2" /></>
