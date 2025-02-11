@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -8,6 +9,7 @@ import { UploadZone } from '@/components/UploadZone';
 import { UploadHeader } from './upload/UploadHeader';
 import { ProcessingButton } from './upload/ProcessingButton';
 import { UploadedImages } from './upload/UploadedImages';
+import { ResizeModeSelector } from './ResizeModeSelector';
 
 interface MainUploadSectionProps {
   onProcessStart?: () => any;
@@ -25,6 +27,7 @@ export function MainUploadSection({
   const [useCustomSize, setUseCustomSize] = useState(false);
   const [customWidth, setCustomWidth] = useState(1080);
   const [customHeight, setCustomHeight] = useState(1080);
+  const [resizeMode, setResizeMode] = useState<'fit' | 'fill'>('fill');
   const { toast } = useToast();
   const MAX_FILES = 50;
 
@@ -89,7 +92,8 @@ export function MainUploadSection({
         templates: useCustomSize ? [] : selectedTemplates,
         customSize: useCustomSize ? { width: customWidth, height: customHeight } : undefined,
         preserveAspectRatio: true,
-        watermarkSettings
+        watermarkSettings,
+        resizeMode
       });
 
       const url = URL.createObjectURL(processedZip);
@@ -125,7 +129,7 @@ export function MainUploadSection({
   return (
     <Card className="bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <UploadHeader />
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6">
         <TemplateSelector
           selectedTemplates={selectedTemplates}
           onTemplateToggle={handleTemplateToggle}
@@ -138,6 +142,11 @@ export function MainUploadSection({
           onCustomSizeChange={setUseCustomSize}
           onWidthChange={setCustomWidth}
           onHeightChange={setCustomHeight}
+        />
+
+        <ResizeModeSelector
+          value={resizeMode}
+          onChange={setResizeMode}
         />
 
         <UploadZone 
