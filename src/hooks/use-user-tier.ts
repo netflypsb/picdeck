@@ -1,9 +1,8 @@
-
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface UserTierData {
-  tier: 'free' | 'platinum';
+  tier: 'free' | 'pro' | 'premium' | 'platinum';
   isLoading: boolean;
 }
 
@@ -69,13 +68,10 @@ export const useUserTier = () => {
           return;
         }
 
-        // If tier is pro or premium, set it to free
-        const newTier = profile.tier === 'platinum' ? 'platinum' : 'free';
-        
         console.log('User profile data:', profile);
         if (mounted) {
           setTierData({ 
-            tier: newTier, 
+            tier: profile.tier as UserTierData['tier'], 
             isLoading: false 
           });
         }

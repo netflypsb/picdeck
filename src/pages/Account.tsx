@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -41,22 +40,40 @@ export default function Account() {
 
   const handleLogout = async () => {
     try {
-      localStorage.clear();
+      // First, clear any existing local storage data
+      localStorage.clear(); // Clear all local storage data
+      
+      // Attempt to sign out
       const { error } = await supabase.auth.signOut();
       
       if (error) {
         console.error('Logout error:', error);
       }
+
+      // Always navigate to home page, even if there was an error
       navigate('/');
       
     } catch (error) {
       console.error('Logout error:', error);
+      // Even if there's an error, navigate to home
       navigate('/');
     }
   };
 
   const handleBackToDashboard = () => {
-    navigate(tier === 'platinum' ? '/platinum-dashboard' : '/free-dashboard');
+    switch (tier) {
+      case 'platinum':
+        navigate('/platinum-dashboard');
+        break;
+      case 'premium':
+        navigate('/premium-dashboard');
+        break;
+      case 'pro':
+        navigate('/pro-dashboard');
+        break;
+      default:
+        navigate('/free-dashboard');
+    }
   };
 
   return (

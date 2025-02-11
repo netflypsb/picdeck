@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Header } from '@/components/Header';
@@ -11,7 +11,7 @@ import { User } from 'lucide-react';
 import { useUserTier } from '@/hooks/use-user-tier';
 import { useToast } from '@/hooks/use-toast';
 
-export default function PlatinumDashboard() {
+export default function PremiumDashboard() {
   const navigate = useNavigate();
   const { tier, isLoading } = useUserTier();
   const { toast } = useToast();
@@ -26,10 +26,10 @@ export default function PlatinumDashboard() {
         return;
       }
 
-      if (!isLoading && tier !== 'platinum') {
+      if (!isLoading && tier !== 'premium' && tier !== 'platinum') {
         toast({
           title: "Access Denied",
-          description: "This dashboard is only available for Platinum tier users.",
+          description: "This dashboard is only available for Premium tier users.",
           variant: "destructive"
         });
         navigate('/free-dashboard');
@@ -58,7 +58,7 @@ export default function PlatinumDashboard() {
       
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold">Platinum Dashboard</h1>
+          <h1 className="text-3xl font-bold">Premium Dashboard</h1>
           <div className="flex items-center gap-4">
             <Button
               variant="outline"

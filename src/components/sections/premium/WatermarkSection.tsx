@@ -1,110 +1,114 @@
+import { useState, useCallback, forwardRef, useImperativeHandle } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { WatermarkTypeSelector } from './watermark/WatermarkTypeSelector';
+import { WatermarkPlacement } from './watermark/WatermarkPlacement';
+import { WatermarkAdjustments } from './watermark/WatermarkAdjustments';
+import { WatermarkHeader } from './watermark/WatermarkHeader';
+import { WatermarkImagePreview } from './watermark/WatermarkImagePreview';
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Slider } from '@/components/ui/slider';
-
-export interface WatermarkSettings {
-  type: 'text' | 'image';
-  text?: string;
-  fontSize?: number;
-  opacity: number;
-  position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'center';
+interface WatermarkSectionRef {
+  getWatermarkSettings: () => any;
 }
 
-export function WatermarkSection() {
-  const [settings, setSettings] = useState<WatermarkSettings>({
-    type: 'text',
-    text: '',
-    fontSize: 24,
-    opacity: 0.5,
-    position: 'bottom-right'
-  });
+export const WatermarkSection = forwardRef<WatermarkSectionRef>((_, ref) => {
+  const { toast } = useToast();
+  const [watermarkType, setWatermarkType] = useState<'image' | 'text'>('image');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [text, setText] = useState('');
+  const [font, setFont] = useState('Arial');
+  const [color, setColor] = useState('#000000');
+  const [transparency, setTransparency] = useState(50);
+  const [scale, setScale] = useState(20);
+  const [placement, setPlacement] = useState('center');
+  const [tiling, setTiling] = useState(false);
+  const [spacing, setSpacing] = useState(10);
+
+  const handleImageChange = useCallback((file: File | null) => {
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Invalid file type",
+          description: "Please upload an image file.",
+          variant: "destructive"
+        });
+        return;
+      }
+      setImageFile(file);
+      toast({
+        title: "Watermark image uploaded",
+        description: "Your watermark image has been set successfully."
+      });
+    }
+  }, [toast]);
+
+  const getWatermarkSettings = useCallback(() => {
+    if (watermarkType === 'image' && !imageFile) return null;
+    if (watermarkType === 'text' && !text) return null;
+
+    const settings = {
+      type: watermarkType,
+      imageFile: watermarkType === 'image' ? imageFile : undefined,
+      text: watermarkType === 'text' ? text : undefined,
+      font,
+      color,
+      transparency,
+      scale,
+      placement,
+      tiling,
+      spacing
+    };
+
+    console.log('Returning watermark settings:', settings);
+    return settings;
+  }, [watermarkType, imageFile, text, font, color, transparency, scale, placement, tiling, spacing]);
+
+  useImperativeHandle(ref, () => ({
+    getWatermarkSettings
+  }));
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Watermark Settings</CardTitle>
-      </CardHeader>
+    <Card className="bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <WatermarkHeader />
       <CardContent className="space-y-6">
-        <div className="space-y-4">
-          <div>
-            <Label>Watermark Type</Label>
-            <Select 
-              value={settings.type}
-              onValueChange={(value: 'text' | 'image') => 
-                setSettings(prev => ({ ...prev, type: value }))
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="text">Text</SelectItem>
-                <SelectItem value="image">Image</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <WatermarkTypeSelector
+          type={watermarkType}
+          onTypeChange={setWatermarkType}
+          onImageChange={handleImageChange}
+          onTextChange={setText}
+          onFontChange={setFont}
+          onColorChange={setColor}
+          text={text}
+          font={font}
+          color={color}
+        />
 
-          {settings.type === 'text' && (
-            <div className="space-y-2">
-              <Label>Watermark Text</Label>
-              <Input
-                value={settings.text}
-                onChange={(e) => setSettings(prev => ({ ...prev, text: e.target.value }))}
-                placeholder="Enter your watermark text"
-              />
-              <div className="space-y-2">
-                <Label>Font Size</Label>
-                <Slider
-                  value={[settings.fontSize || 24]}
-                  onValueChange={(value) => setSettings(prev => ({ ...prev, fontSize: value[0] }))}
-                  min={12}
-                  max={72}
-                  step={1}
-                />
-                <div className="text-sm text-muted-foreground">{settings.fontSize}px</div>
-              </div>
-            </div>
-          )}
+        {watermarkType === 'image' && imageFile && (
+          <WatermarkImagePreview
+            imageFile={imageFile}
+            onRemove={() => setImageFile(null)}
+          />
+        )}
 
-          <div className="space-y-2">
-            <Label>Opacity</Label>
-            <Slider
-              value={[settings.opacity * 100]}
-              onValueChange={(value) => setSettings(prev => ({ ...prev, opacity: value[0] / 100 }))}
-              min={10}
-              max={100}
-              step={1}
-            />
-            <div className="text-sm text-muted-foreground">{Math.round(settings.opacity * 100)}%</div>
-          </div>
+        <WatermarkPlacement
+          value={placement}
+          onChange={setPlacement}
+          disabled={tiling}
+        />
 
-          <div>
-            <Label>Position</Label>
-            <Select 
-              value={settings.position}
-              onValueChange={(value: WatermarkSettings['position']) => 
-                setSettings(prev => ({ ...prev, position: value }))
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="top-left">Top Left</SelectItem>
-                <SelectItem value="top-right">Top Right</SelectItem>
-                <SelectItem value="bottom-left">Bottom Left</SelectItem>
-                <SelectItem value="bottom-right">Bottom Right</SelectItem>
-                <SelectItem value="center">Center</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        <WatermarkAdjustments
+          transparency={transparency}
+          scale={scale}
+          tiling={tiling}
+          spacing={spacing}
+          onTransparencyChange={setTransparency}
+          onScaleChange={setScale}
+          onTilingChange={setTiling}
+          onSpacingChange={setSpacing}
+        />
       </CardContent>
     </Card>
   );
-}
+});
+
+WatermarkSection.displayName = 'WatermarkSection';

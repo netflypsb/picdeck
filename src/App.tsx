@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
 import Index from './pages/Index';
@@ -7,6 +6,8 @@ import FAQ from './pages/FAQ';
 import Contact from './pages/Contact';
 import Account from './pages/Account';
 import FreeDashboard from './pages/FreeDashboard';
+import ProDashboard from './pages/ProDashboard';
+import PremiumDashboard from './pages/PremiumDashboard';
 import PlatinumDashboard from './pages/PlatinumDashboard';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
@@ -21,6 +22,8 @@ function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/account" element={<Account />} />
         <Route path="/free-dashboard" element={<FreeDashboard />} />
+        <Route path="/pro-dashboard" element={<ProDashboard />} />
+        <Route path="/premium-dashboard" element={<PremiumDashboard />} />
         <Route path="/platinum-dashboard" element={<PlatinumDashboard />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms-of-service" element={<TermsOfService />} />

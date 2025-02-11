@@ -1,4 +1,3 @@
-
 import { LogIn, Menu, X } from 'lucide-react';
 import { Button } from './ui/button';
 import { useState, useEffect } from 'react';
@@ -64,7 +63,16 @@ export function Header() {
   }, [navigate]);
 
   const getDashboardRoute = () => {
-    return tier === 'platinum' ? '/platinum-dashboard' : '/free-dashboard';
+    switch (tier) {
+      case 'platinum':
+        return '/platinum-dashboard';
+      case 'premium':
+        return '/premium-dashboard';
+      case 'pro':
+        return '/pro-dashboard';
+      default:
+        return '/free-dashboard';
+    }
   };
 
   const scrollToSection = (id: string) => {
