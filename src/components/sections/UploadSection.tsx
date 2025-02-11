@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { UploadZone } from '@/components/UploadZone';
 import { ImagePreview } from '@/components/ImagePreview';
@@ -44,7 +45,10 @@ export function UploadSection() {
     setIsProcessing(true);
 
     try {
-      const zipBlob = await processImages(files);
+      const zipBlob = await processImages(files, {
+        templates: [], // Use default templates for free tier
+        resizeMode: 'fill' // Default to fill mode for free tier
+      });
       
       const link = document.createElement('a');
       link.href = URL.createObjectURL(zipBlob);
