@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { User } from 'lucide-react';
 import { useUserTier } from '@/hooks/use-user-tier';
 import { useToast } from '@/hooks/use-toast';
+import { UploadSection } from '@/components/sections/UploadSection';
+import { WatermarkSection } from '@/components/sections/premium/WatermarkSection';
 
 export default function PlatinumDashboard() {
   const navigate = useNavigate();
@@ -64,11 +66,13 @@ export default function PlatinumDashboard() {
           </div>
         </div>
 
-        <div className="space-y-8">
-          <p className="text-muted-foreground">
-            Welcome to your Platinum Dashboard! We're currently working on adding new features.
-            Stay tuned for updates.
-          </p>
+        <div className="grid gap-8 md:grid-cols-[2fr,1fr]">
+          <div className="space-y-8">
+            <UploadSection />
+          </div>
+          <div>
+            <WatermarkSection />
+          </div>
         </div>
       </main>
 
