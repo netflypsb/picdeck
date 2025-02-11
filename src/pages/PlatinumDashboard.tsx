@@ -1,11 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Header } from '@/components/Header';
 import { AlphaTestingBanner } from '@/components/AlphaTestingBanner';
-import { MainUploadSection } from '@/components/sections/premium/MainUploadSection';
-import { WatermarkSection } from '@/components/sections/premium/WatermarkSection';
-import { HowToSection } from '@/components/sections/premium/HowToSection';
 import { Button } from '@/components/ui/button';
 import { User } from 'lucide-react';
 import { useUserTier } from '@/hooks/use-user-tier';
@@ -15,7 +13,6 @@ export default function PlatinumDashboard() {
   const navigate = useNavigate();
   const { tier, isLoading } = useUserTier();
   const { toast } = useToast();
-  const watermarkRef = useRef<{ getWatermarkSettings: () => any }>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -38,10 +35,6 @@ export default function PlatinumDashboard() {
 
     checkAuth();
   }, [tier, isLoading, navigate, toast]);
-
-  const handleProcessStart = () => {
-    return watermarkRef.current?.getWatermarkSettings();
-  };
 
   if (isLoading) {
     return (
@@ -72,9 +65,10 @@ export default function PlatinumDashboard() {
         </div>
 
         <div className="space-y-8">
-          <MainUploadSection onProcessStart={handleProcessStart} />
-          <WatermarkSection ref={watermarkRef} />
-          <HowToSection />
+          <p className="text-muted-foreground">
+            Welcome to your Platinum Dashboard! We're currently working on adding new features.
+            Stay tuned for updates.
+          </p>
         </div>
       </main>
 
