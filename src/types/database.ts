@@ -1,10 +1,11 @@
 
 export interface Profile {
   id: string;
-  subscription_tier: 'free' | 'platinum';
-  subscription_status: 'active' | 'inactive';
+  tier: 'free' | 'pro' | 'premium' | 'platinum';
   stripe_customer_id?: string;
   stripe_subscription_id?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ContactMessage {
@@ -17,13 +18,32 @@ export interface ContactMessage {
 
 export interface StripePrice {
   id: string;
-  product_id: string;
-  active: boolean;
-  currency: string;
-  type: string;
-  unit_amount: number;
-  interval?: string;
-  interval_count?: number;
+  product_id: string | null;
+  active: boolean | null;
+  currency: string | null;
+  type: string | null;
+  unit_amount: number | null;
+  interval?: string | null;
+  interval_count?: number | null;
   trial_period_days?: number | null;
-  metadata?: Record<string, string>;
+  metadata?: Record<string, string> | null;
+  created_at: string;
+}
+
+export interface Subscription {
+  id: string;
+  user_id: string;
+  status: string | null;
+  price_id: string | null;
+  quantity: number | null;
+  cancel_at_period_end: boolean | null;
+  created_at: string;
+  current_period_start: string | null;
+  current_period_end: string | null;
+  ended_at: string | null;
+  cancel_at: string | null;
+  canceled_at: string | null;
+  trial_start: string | null;
+  trial_end: string | null;
+  metadata: Record<string, any> | null;
 }
