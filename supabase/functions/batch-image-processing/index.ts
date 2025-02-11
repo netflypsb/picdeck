@@ -1,31 +1,12 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
-import ImageMagick from "https://deno.land/x/imagemagick_deno@0.0.19/mod.ts";
+import * as ImageMagick from 'https://deno.land/x/imagemagick_deno@0.0.19/mod.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-interface Template {
-  name: string;
-  width: number;
-  height: number;
-}
-
-interface WatermarkSettings {
-  type: 'image' | 'text';
-  text?: string;
-  imageUrl?: string;
-  transparency: number;
-  scale: number;
-  placement: string;
-  tiling: boolean;
-  spacing: number;
-}
-
-type ResizeMode = 'fit' | 'fill';
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -34,230 +15,88 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    const { userId, filePaths, templates, watermarkSettings, resizeMode } = await req.json();
+    console.log('Processing request:', { userId, filePaths, templates, watermarkSettings, resizeMode });
 
-    const { userId, filePaths, templates, watermarkSettings, resizeMode = 'fill' } = await req.json();
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-    if (!userId || !filePaths || !templates) {
-      throw new Error('Missing required parameters');
-    }
-
-    console.log(`Processing ${filePaths.length} images for user ${userId} with resize mode: ${resizeMode}`);
-
+    // Download original images
     const processedImages = [];
-
     for (const filePath of filePaths) {
-      try {
-        // Download original image
-        const { data: fileData, error: downloadError } = await supabaseClient.storage
-          .from('original-images')
-          .download(filePath);
+      const { data: fileData, error: downloadError } = await supabase.storage
+        .from('original-images')
+        .download(filePath);
 
-        if (downloadError) {
-          console.error(`Error downloading ${filePath}:`, downloadError);
-          continue;
-        }
+      if (downloadError) throw downloadError;
 
-        // Convert file to buffer
-        const imageBuffer = await fileData.arrayBuffer();
+      const imageBuffer = await fileData.arrayBuffer();
+      console.log('Downloaded image:', filePath);
 
-        // Process for each template
-        for (const template of templates) {
-          try {
-            // Process image with ImageMagick based on resize mode
-            let processedBuffer;
-            
-            if (resizeMode === 'fit') {
-              // Fit mode: resize to fit within dimensions, maintaining aspect ratio
-              processedBuffer = await ImageMagick.execute({
-                input: new Uint8Array(imageBuffer),
-                commands: [
-                  'convert',
-                  '-',  // Read from stdin
-                  '-resize', `${template.width}x${template.height}>`,  // Only shrink larger images
-                  'PNG:-'  // Output as PNG
-                ],
-              });
-            } else {
-              // Fill mode: resize to fill dimensions and crop excess
-              processedBuffer = await ImageMagick.execute({
-                input: new Uint8Array(imageBuffer),
-                commands: [
-                  'convert',
-                  '-',  // Read from stdin
-                  '-resize', `${template.width}x${template.height}^`,  // Fill area
-                  '-gravity', 'center',
-                  '-extent', `${template.width}x${template.height}`,  // Crop to exact size
-                  'PNG:-'  // Output as PNG
-                ],
-              });
-            }
-
-            // Apply watermark if settings provided
-            if (watermarkSettings) {
-              const watermarkCommands = [];
-
-              if (watermarkSettings.type === 'text' && watermarkSettings.text) {
-                // Text watermark
-                watermarkCommands.push(
-                  '-gravity', watermarkSettings.placement.toLowerCase(),
-                  '-fill', 'white',
-                  '-font', 'Arial',
-                  '-pointsize', '20',
-                  '-draw', `text 0,0 "${watermarkSettings.text}"`
-                );
-              } else if (watermarkSettings.type === 'image' && watermarkSettings.imageUrl) {
-                try {
-                  // Download watermark image
-                  console.log('Downloading watermark image:', watermarkSettings.imageUrl);
-                  const watermarkResponse = await fetch(watermarkSettings.imageUrl);
-                  if (!watermarkResponse.ok) {
-                    throw new Error(`Failed to download watermark image: ${watermarkResponse.statusText}`);
-                  }
-                  
-                  const watermarkBuffer = await watermarkResponse.arrayBuffer();
-                  
-                  // Create temporary watermark image with proper sizing and transparency
-                  const preparedWatermark = await ImageMagick.execute({
-                    input: new Uint8Array(watermarkBuffer),
-                    commands: [
-                      'convert',
-                      '-',
-                      '-resize', `${watermarkSettings.scale}%`,
-                      '-alpha', 'set',
-                      '-channel', 'A',
-                      '-evaluate', 'multiply', `${watermarkSettings.transparency / 100}`,
-                      '+channel',
-                      'PNG:-'
-                    ],
-                  });
-
-                  if (watermarkSettings.tiling) {
-                    // Create tiled watermark
-                    processedBuffer = await ImageMagick.execute({
-                      input: processedBuffer,
-                      commands: [
-                        'convert',
-                        '-',
-                        '(',
-                        'PNG:-',  // Second input image (watermark)
-                        '-write', 'mpr:watermark',
-                        '+delete',
-                        ')',
-                        '(',
-                        '+clone',
-                        '-tile', 'mpr:watermark',
-                        '-gravity', watermarkSettings.placement.toLowerCase(),
-                        '-geometry', `+${watermarkSettings.spacing}+${watermarkSettings.spacing}`,
-                        '-composite',
-                        ')',
-                        '-composite'
-                      ],
-                      secondInput: preparedWatermark,
-                    });
-                  } else {
-                    // Single watermark placement
-                    processedBuffer = await ImageMagick.execute({
-                      input: processedBuffer,
-                      commands: [
-                        'convert',
-                        '-',
-                        'PNG:-',  // Second input image (watermark)
-                        '-gravity', watermarkSettings.placement.toLowerCase(),
-                        '-composite'
-                      ],
-                      secondInput: preparedWatermark,
-                    });
-                  }
-                } catch (watermarkError) {
-                  console.error('Error processing watermark:', watermarkError);
-                }
-              }
-
-              // Apply text watermark commands if any
-              if (watermarkCommands.length > 0) {
-                processedBuffer = await ImageMagick.execute({
-                  input: processedBuffer,
-                  commands: watermarkCommands,
-                });
-              }
-            }
-
-            // Generate output path
-            const outputPath = `${userId}/${template.name}/${filePath}`;
-
-            // Upload processed image
-            const { error: uploadError } = await supabaseClient.storage
-              .from('processed-images')
-              .upload(outputPath, processedBuffer, {
-                contentType: 'image/png',
-                upsert: true
-              });
-
-            if (uploadError) {
-              console.error(`Error uploading processed image ${outputPath}:`, uploadError);
-              continue;
-            }
-
-            // Get public URL
-            const { data: urlData } = await supabaseClient.storage
-              .from('processed-images')
-              .getPublicUrl(outputPath);
-
-            processedImages.push({
-              template: template.name,
-              url: urlData.publicUrl,
-              path: outputPath
-            });
-
-            // Update processing queue status
-            await supabaseClient
-              .from('image_processing_queue')
-              .update({ 
-                status: 'completed',
-                updated_at: new Date().toISOString()
-              })
-              .eq('original_path', filePath)
-              .eq('user_id', userId);
-
-          } catch (templateError) {
-            console.error(`Error processing template ${template.name} for ${filePath}:`, templateError);
+      // Process each template
+      for (const template of templates) {
+        const { width, height } = template;
+        
+        // Process image with ImageMagick
+        const processedBuffer = await ImageMagick.resize(
+          new Uint8Array(imageBuffer),
+          {
+            width,
+            height,
+            fit: resizeMode === 'fit' ? 'inside' : 'cover',
           }
+        );
+
+        // Apply watermark if settings provided
+        if (watermarkSettings && watermarkSettings.type === 'text' && watermarkSettings.text) {
+          // TODO: Implement watermark processing
         }
-      } catch (imageError) {
-        console.error(`Error processing image ${filePath}:`, imageError);
+
+        // Upload processed image
+        const processedFileName = `${userId}/${Date.now()}-${width}x${height}-${filePath.split('/').pop()}`;
+        const { error: uploadError, data: uploadData } = await supabase.storage
+          .from('processed-images')
+          .upload(processedFileName, processedBuffer);
+
+        if (uploadError) throw uploadError;
+
+        if (uploadData) {
+          const { data: { publicUrl } } = supabase.storage
+            .from('processed-images')
+            .getPublicUrl(processedFileName);
+
+          processedImages.push({
+            originalPath: filePath,
+            processedPath: processedFileName,
+            url: publicUrl,
+            width,
+            height
+          });
+        }
       }
     }
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: 'Batch processing complete',
-        processedImages 
-      }),
+      JSON.stringify({ success: true, processedImages }),
       { 
         headers: { 
           ...corsHeaders,
-          'Content-Type': 'application/json' 
+          'Content-Type': 'application/json'
         }
       }
     );
 
   } catch (error) {
-    console.error('Error in batch-image-processing:', error);
+    console.error('Processing error:', error);
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error.message 
-      }),
+      JSON.stringify({ error: error.message }),
       { 
         status: 500,
-        headers: { 
+        headers: {
           ...corsHeaders,
-          'Content-Type': 'application/json' 
+          'Content-Type': 'application/json'
         }
       }
     );
