@@ -1,4 +1,9 @@
+
 project_id = "xyxpiinqnibqmosvndxv"
 
+[functions]
 [functions.batch-image-processing]
+verify_jwt = true
+
+[functions.create-checkout-session]
 verify_jwt = true
