@@ -1,6 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import * as ImageMagick from 'https://deno.land/x/imagemagick_deno@0.0.19/mod.ts';
+import * as ImageMagick from "https://deno.land/x/imagemagick_deno@0.0.19/mod.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 const corsHeaders = {
@@ -40,7 +40,7 @@ serve(async (req) => {
         const { width, height } = template;
         
         // Process image with ImageMagick
-        const processedBuffer = await ImageMagick.resize(
+        let processedBuffer = await ImageMagick.resize(
           new Uint8Array(imageBuffer),
           {
             width,
@@ -50,8 +50,54 @@ serve(async (req) => {
         );
 
         // Apply watermark if settings provided
-        if (watermarkSettings && watermarkSettings.type === 'text' && watermarkSettings.text) {
-          // TODO: Implement watermark processing
+        if (watermarkSettings) {
+          const { type, text, transparency, scale, placement, tiling, spacing } = watermarkSettings;
+          
+          if (type === 'text' && text) {
+            // Calculate font size based on image dimensions and scale
+            const fontSize = Math.min(width, height) * (scale / 100);
+            
+            // Create watermark options based on placement
+            let gravity;
+            switch (placement) {
+              case 'top-left': gravity = 'northwest'; break;
+              case 'top-right': gravity = 'northeast'; break;
+              case 'bottom-left': gravity = 'southwest'; break;
+              case 'bottom-right': gravity = 'southeast'; break;
+              default: gravity = 'center';
+            }
+
+            if (tiling) {
+              // Apply tiled watermark
+              processedBuffer = await ImageMagick.convert(
+                processedBuffer,
+                'jpg',
+                [
+                  '-size', `${width}x${height}`,
+                  'tile:caption:' + text,
+                  '-gravity', 'center',
+                  '-pointsize', fontSize.toString(),
+                  '-density', '72',
+                  '-fill', `rgba(255,255,255,${transparency / 100})`,
+                  '-tile',
+                  '-draw', `text 0,0 "${text}"`,
+                ]
+              );
+            } else {
+              // Apply single watermark
+              processedBuffer = await ImageMagick.convert(
+                processedBuffer,
+                'jpg',
+                [
+                  '-gravity', gravity,
+                  '-pointsize', fontSize.toString(),
+                  '-fill', `rgba(255,255,255,${transparency / 100})`,
+                  '-annotate', '+10+10',
+                  text
+                ]
+              );
+            }
+          }
         }
 
         // Upload processed image
